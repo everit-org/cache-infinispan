@@ -1,26 +1,5 @@
 package org.everit.osgi.cache.infinispan.component;
 
-/*
- * Copyright (c) 2011, Everit Kft.
- *
- * All rights reserved.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301  USA
- */
-
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -60,9 +39,9 @@ import org.osgi.framework.wiring.BundleWiring;
 @Service
 public class CacheFactoryComponent implements CacheFactory {
 
-    private Properties properties = new Properties();
-    private EmbeddedCacheManager manager;
     private JCacheManager jCacheManager;
+    private EmbeddedCacheManager manager;
+    private Properties properties = new Properties();
 
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> config) {
@@ -93,7 +72,7 @@ public class CacheFactoryComponent implements CacheFactory {
     }
 
     @Override
-    public Cache<String, Object> createCache(final int maxEntries, final Map<String, Object> params) {
+    public Cache<String, Object> createCache(final int maxEntries, final Map<String, ?> params) {
 
         String uid = UUID.randomUUID().toString();
 
