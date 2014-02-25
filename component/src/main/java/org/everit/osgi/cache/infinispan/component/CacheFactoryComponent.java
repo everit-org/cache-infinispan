@@ -2,7 +2,6 @@ package org.everit.osgi.cache.infinispan.component;
 
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 
 import javax.cache.Cache;
 
@@ -10,60 +9,99 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
 import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Modified;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
-import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.jcache.JCacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.service.component.ComponentException;
+import org.osgi.service.log.LogService;
 
 /**
  * A component that can customize and create Cache instances.
  */
-@Component(ds = true, metatype = true, configurationFactory = true, policy = ConfigurationPolicy.REQUIRE,
-        immediate = true)
+@Component(ds = true, metatype = true, configurationFactory = true, policy = ConfigurationPolicy.REQUIRE)
 @org.apache.felix.scr.annotations.Properties({
-        @Property(name = "clusterName"),
-        @Property(name = "multicastAddress"),
-        @Property(name = "multicastPort") })
+        @Property(name = CacheConstants.PROP_CF_CLUSTERED, boolValue = false),
+        @Property(name = CacheConstants.PROP_CF_TRANSPORT_CLUSTER_NAME),
+        @Property(name = CacheConstants.PROP_CF_TRANSPORT_MACHINE_ID),
+        @Property(name = CacheConstants.PROP_CF_TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, intValue = 4 * 60 * 1000),
+        @Property(name = CacheConstants.PROP_CF_TRANSPORT_CONFIGURATION_XML),
+        @Property(name = "logService.target")
+})
 @Service
 public class CacheFactoryComponent implements CacheFactory {
 
+    private Map<String, ?> componentConfiguration;
     private JCacheManager jCacheManager;
+    @Reference
+    private LogService logService;
+
     private EmbeddedCacheManager manager;
+
     private Properties properties = new Properties();
 
     @Activate
-    public void activate(final BundleContext context, final Map<String, Object> config) {
-        modified(config);
-
-        properties
-                .setProperty(
-                        "jgroupsConfString",
-                        String.format(
-                                "<config xmlns=\"urn:org:jgroups\"\r\n        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n        xsi:schemaLocation=\"urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd\">\r\n    <UDP\r\n %1$s \r\n %2$s />\r\n    <PING/>\r\n    <MERGE2/>\r\n    <FD_SOCK/>\r\n    <FD_ALL/>\r\n    <VERIFY_SUSPECT/>\r\n    <pbcast.NAKACK2/>\r\n    <UNICAST3/>\r\n    <pbcast.STABLE/>\r\n    <pbcast.GMS/>\r\n    <UFC/>\r\n    <MFC/>\r\n    <FRAG2/>\r\n    <pbcast.STATE_TRANSFER />\r\n    <pbcast.FLUSH timeout=\"0\"/>\r\n</config>",
-                                properties.getProperty("mcast_addr"), properties.getProperty("mcast_port")));
-
+    public void activate(final BundleContext context, final Map<String, ?> config) {
+        this.componentConfiguration = config;
         BundleWiring bundleWiring = context.getBundle().adapt(BundleWiring.class);
         ClassLoader componentClassLoader = bundleWiring.getClassLoader();
 
         GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
         builder.classLoader(new MergedClassLoader(new ClassLoader[] { componentClassLoader,
                 JGroupsTransport.class.getClassLoader() }));
-        builder
-                .transport().defaultTransport()
-                .addProperty("configurationXml", properties.getProperty("jgroupsConfString"))
-                .clusterName(properties.getProperty("clusterName"));
+
+        boolean clustered = getBooleanConfigValue(CacheConstants.PROP_CF_CLUSTERED);
+        if (clustered) {
+            builder.clusteredDefault();
+            TransportConfigurationBuilder transport = builder.transport();
+            String clusterName = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_CLUSTER_NAME, false);
+            if (clusterName != null) {
+                transport.clusterName(clusterName);
+            }
+            Integer distributedSyncTimeout = getIntegerConfigValue(
+                    CacheConstants.PROP_CF_TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, false);
+            if (distributedSyncTimeout != null) {
+                transport.distributedSyncTimeout(distributedSyncTimeout);
+            }
+
+            String machineId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_MACHINE_ID, false);
+            if (machineId != null) {
+                transport.machineId(machineId);
+            }
+
+            String nodeName = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_NODE_NAME, false);
+            if (nodeName != null) {
+                transport.nodeName(nodeName);
+            }
+
+            String rackId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_RACK_ID, false);
+            if (rackId != null) {
+                transport.rackId(rackId);
+            }
+
+            String siteId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_RACK_ID, false);
+            if (siteId != null) {
+                transport.siteId(siteId);
+            }
+            String configurationXml = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_CONFIGURATION_XML, false);
+            if (configurationXml != null) {
+                transport.addProperty("configurationXml", configurationXml);
+            }
+        } else {
+            builder.nonClusteredDefault();
+        }
 
         GlobalConfiguration globalConfig = builder.build();
         manager = new DefaultCacheManager(globalConfig);
@@ -72,65 +110,71 @@ public class CacheFactoryComponent implements CacheFactory {
     }
 
     @Override
-    public Cache<String, Object> createCache(final int maxEntries, final Map<String, ?> params) {
-
-        String uid = UUID.randomUUID().toString();
+    public <K, V> Cache<K, V> createCache(final CacheConfiguration<K, V> cacheConfiguration,
+            final ClassLoader classLoader) {
 
         Configuration dcc = manager.getDefaultCacheConfiguration();
         ConfigurationBuilder cb = new ConfigurationBuilder().read(dcc);
-        cb.eviction().maxEntries(maxEntries);
-
-        if (params != null) {
-            if (params.containsKey(Constants.PARAM_MAXIDLE) && (params.get(Constants.PARAM_MAXIDLE) instanceof Long)) {
-                cb.expiration().maxIdle((Long) params.get(Constants.PARAM_MAXIDLE));
-            }
-            if (params.containsKey(Constants.PARAM_WAKEUPINTERVAL)
-                    && (params.get(Constants.PARAM_WAKEUPINTERVAL) instanceof Long)) {
-                cb.expiration().wakeUpInterval((Long) params.get(Constants.PARAM_WAKEUPINTERVAL));
-            }
-            if (params.containsKey(Constants.PARAM_CACHEMODE)
-                    && (params.get(Constants.PARAM_CACHEMODE) instanceof String)) {
-                String cacheMode = (String) params.get(Constants.PARAM_CACHEMODE);
-                CacheMode mode = null;
-                if (Constants.CACHEMODE_DIST_SYNC.equals(cacheMode)) {
-                    mode = CacheMode.DIST_SYNC;
-                    if (params.containsKey(Constants.PARAM_NUMOWNERS)
-                            && (params.get(Constants.PARAM_NUMOWNERS) instanceof Integer)) {
-                        cb.clustering().hash().numOwners((Integer) params.get(Constants.PARAM_NUMOWNERS));
-                    }
-                }
-                else if (Constants.CACHEMODE_DIST_ASYNC.equals(cacheMode)) {
-                    mode = CacheMode.DIST_ASYNC;
-                }
-                else if (Constants.CACHEMODE_LOCAL.equals(cacheMode)) {
-                    mode = CacheMode.LOCAL;
-                }
-                else if (Constants.CACHEMODE_REPL_ASYNC.equals(cacheMode)) {
-                    mode = CacheMode.REPL_ASYNC;
-                }
-                else if (Constants.CACHEMODE_REPL_SYNC.equals(cacheMode)) {
-                    mode = CacheMode.REPL_SYNC;
-                }
-                else if (Constants.CACHEMODE_INVALIDATION_ASYNC.equals(cacheMode)) {
-                    mode = CacheMode.INVALIDATION_ASYNC;
-                }
-                else if (Constants.CACHEMODE_INVALIDATION_SYNC.equals(cacheMode)) {
-                    mode = CacheMode.INVALIDATION_SYNC;
-                }
-
-                if (mode != null) {
-                    cb.clustering().cacheMode(mode);
-                }
-            }
+        if (classLoader != null) {
+            cb.classLoader(classLoader);
         }
 
-        Configuration conf = cb.build();
-        manager.defineConfiguration(uid, conf);
-        jCacheManager.configureCache(uid, (AdvancedCache<Object, Object>) manager.getCache(uid));
-
-        Cache<String, Object> cache = jCacheManager.getCache(uid);
-
-        return cache;
+        // cb.invocationBatching()
+        // cb.eviction().maxEntries(maxEntries);
+        //
+        // if (params != null) {
+        // if (params.containsKey(CacheConstants.PARAM_MAXIDLE)
+        // && (params.get(CacheConstants.PARAM_MAXIDLE) instanceof Long)) {
+        // cb.expiration().maxIdle((Long) params.get(CacheConstants.PARAM_MAXIDLE));
+        // }
+        // if (params.containsKey(CacheConstants.PARAM_WAKEUPINTERVAL)
+        // && (params.get(CacheConstants.PARAM_WAKEUPINTERVAL) instanceof Long)) {
+        // cb.expiration().wakeUpInterval((Long) params.get(CacheConstants.PARAM_WAKEUPINTERVAL));
+        // }
+        // if (params.containsKey(CacheConstants.PARAM_CACHEMODE)
+        // && (params.get(CacheConstants.PARAM_CACHEMODE) instanceof String)) {
+        // String cacheMode = (String) params.get(CacheConstants.PARAM_CACHEMODE);
+        // CacheMode mode = null;
+        // if (CacheConstants.CACHEMODE_DIST_SYNC.equals(cacheMode)) {
+        // mode = CacheMode.DIST_SYNC;
+        // if (params.containsKey(CacheConstants.PARAM_NUMOWNERS)
+        // && (params.get(CacheConstants.PARAM_NUMOWNERS) instanceof Integer)) {
+        // cb.clustering().hash().numOwners((Integer) params.get(CacheConstants.PARAM_NUMOWNERS));
+        // }
+        // }
+        // else if (CacheConstants.CACHEMODE_DIST_ASYNC.equals(cacheMode)) {
+        // mode = CacheMode.DIST_ASYNC;
+        // }
+        // else if (CacheConstants.CACHEMODE_LOCAL.equals(cacheMode)) {
+        // mode = CacheMode.LOCAL;
+        // }
+        // else if (CacheConstants.CACHEMODE_REPL_ASYNC.equals(cacheMode)) {
+        // mode = CacheMode.REPL_ASYNC;
+        // }
+        // else if (CacheConstants.CACHEMODE_REPL_SYNC.equals(cacheMode)) {
+        // mode = CacheMode.REPL_SYNC;
+        // }
+        // else if (CacheConstants.CACHEMODE_INVALIDATION_ASYNC.equals(cacheMode)) {
+        // mode = CacheMode.INVALIDATION_ASYNC;
+        // }
+        // else if (CacheConstants.CACHEMODE_INVALIDATION_SYNC.equals(cacheMode)) {
+        // mode = CacheMode.INVALIDATION_SYNC;
+        // }
+        //
+        // if (mode != null) {
+        // cb.clustering().cacheMode(mode);
+        // }
+        // }
+        // }
+        //
+        // Configuration conf = cb.build();
+        // manager.defineConfiguration(cacheName, conf);
+        // jCacheManager.configureCache(cacheName, (AdvancedCache<Object, Object>) manager.getCache(cacheName));
+        //
+        // Cache<String, Object> cache = jCacheManager.getCache(cacheName);
+        //
+        // return cache;
+        return null;
     }
 
     /**
@@ -141,13 +185,58 @@ public class CacheFactoryComponent implements CacheFactory {
         jCacheManager.close();
     }
 
+    private boolean getBooleanConfigValue(final String key) {
+        Object value = componentConfiguration.get(key);
+        if (value == null) {
+            throw new ComponentException("The value of the boolean configuration property '" + key
+                    + "' is not defined.");
+        }
+        if (!(value instanceof Boolean)) {
+            throw new ComponentException("Type of configuration property must be Boolean. Current type is "
+                    + value.getClass().toString());
+        }
+        return (Boolean) value;
+    }
+
+    private Integer getIntegerConfigValue(final String key, final boolean mandatory) {
+        Object value = getObjectValue(key, mandatory);
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof Integer)) {
+            throw new ComponentException("Type of configuration property must be String. Current type is "
+                    + value.getClass().toString());
+        }
+        return (Integer) value;
+    }
+
+    private Object getObjectValue(final String key, final boolean mandatory) {
+        Object value = componentConfiguration.get(key);
+        if (value == null && mandatory) {
+            throw new ComponentException("The value of the mandatory configuration property '" + key
+                    + "' is not defined.");
+        }
+        return value;
+    }
+
+    private String getStringConfigValue(final String key, final boolean mandatory) {
+        Object value = getObjectValue(key, mandatory);
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof String)) {
+            throw new ComponentException("Type of configuration property must be String. Current type is "
+                    + value.getClass().toString());
+        }
+        return (String) value;
+    }
+
     /**
      * This method checks the validity of the given configuration and sets them to the properties variable.
      * 
      * @param config
      *            The new configuration of the component.
      */
-    @Modified
     public void modified(final Map<String, Object> config) {
         Object clusterName = config.get("clusterName");
         if (clusterName != null) {

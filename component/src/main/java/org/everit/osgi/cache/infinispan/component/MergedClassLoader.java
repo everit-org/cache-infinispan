@@ -1,4 +1,5 @@
 package org.everit.osgi.cache.infinispan.component;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
