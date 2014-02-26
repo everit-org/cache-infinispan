@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Everit - Infinispan Cache.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.everit.osgi.cache.infinispan;
+package org.everit.osgi.cache.infinispan.config;
 
 /**
  * Defines standard names for infinispan cache factory component configuration

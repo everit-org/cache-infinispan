@@ -25,7 +25,7 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
-import org.everit.osgi.cache.infinispan.CacheConstants;
+import org.everit.osgi.cache.infinispan.config.CacheConstants;
 
 @Component(configurationFactory = true, immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
 @Properties({ @Property(name = CacheConstants.PROP_CC_CACHE_NAME), @Property(name = CacheConstants.PROP_CC_MAX_ENTRIES) })

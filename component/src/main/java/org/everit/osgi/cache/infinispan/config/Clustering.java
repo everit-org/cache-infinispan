@@ -20,24 +20,64 @@ import org.infinispan.configuration.cache.CacheMode;
 
 public class Clustering {
 
-    private CacheMode cacheMode;
-
     private Async async;
 
-    public CacheMode getCacheMode() {
-        return cacheMode;
-    }
+    private CacheMode cacheMode;
 
-    public void setCacheMode(CacheMode cacheMode) {
-        this.cacheMode = cacheMode;
-    }
+    private Hash hash;
+
+    private L1 l1;
+
+    private StateTransfer stateTransfer;
+
+    private Sync sync;
 
     public Async getAsync() {
         return async;
     }
 
-    public void setAsync(Async async) {
+    public CacheMode getCacheMode() {
+        return cacheMode;
+    }
+
+    public Hash getHash() {
+        return hash;
+    }
+
+    public L1 getL1() {
+        return l1;
+    }
+
+    public StateTransfer getStateTransfer() {
+        return stateTransfer;
+    }
+
+    public Sync getSync() {
+        return sync;
+    }
+
+    public void setAsync(final Async async) {
         this.async = async;
+    }
+
+    public void setCacheMode(final CacheMode cacheMode) {
+        this.cacheMode = cacheMode;
+    }
+
+    public void setHash(final Hash hash) {
+        this.hash = hash;
+    }
+
+    public void setL1(final L1 l1) {
+        this.l1 = l1;
+    }
+
+    public void setStateTransfer(final StateTransfer stateTransfer) {
+        this.stateTransfer = stateTransfer;
+    }
+
+    public void setSync(final Sync sync) {
+        this.sync = sync;
     }
 
 }

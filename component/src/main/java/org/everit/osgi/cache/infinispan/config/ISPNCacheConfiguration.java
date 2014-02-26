@@ -14,31 +14,40 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Everit - Infinispan Cache.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.everit.osgi.cache.infinispan;
+package org.everit.osgi.cache.infinispan.config;
 
 import org.everit.osgi.cache.api.CacheConfiguration;
-import org.everit.osgi.cache.infinispan.config.Clustering;
 
 public class ISPNCacheConfiguration<K, V> implements CacheConfiguration<K, V> {
 
-    private String cacheName;
+    private String cacheName = null;
 
-    private Clustering clustering;
+    private Clustering clustering = null;
+
+    private DeadlockDetection deadlockDetection = null;
 
     public String getCacheName() {
         return cacheName;
-    }
-
-    public void setCacheName(String cacheName) {
-        this.cacheName = cacheName;
     }
 
     public Clustering getClustering() {
         return clustering;
     }
 
-    public void setClustering(Clustering clustering) {
+    public DeadlockDetection getDeadlockDetection() {
+        return deadlockDetection;
+    }
+
+    public void setCacheName(final String cacheName) {
+        this.cacheName = cacheName;
+    }
+
+    public void setClustering(final Clustering clustering) {
         this.clustering = clustering;
+    }
+
+    public void setDeadlockDetection(final DeadlockDetection deadlockDetection) {
+        this.deadlockDetection = deadlockDetection;
     }
 
 }
