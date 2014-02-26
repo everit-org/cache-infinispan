@@ -11,7 +11,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheFactory;
-import org.everit.osgi.cache.infinispan.component.CacheConstants;
+import org.everit.osgi.cache.infinispan.CacheConstants;
 import org.everit.osgi.dev.testrunner.TestDuringDevelopment;
 import org.junit.Assert;
 import org.junit.Test;
