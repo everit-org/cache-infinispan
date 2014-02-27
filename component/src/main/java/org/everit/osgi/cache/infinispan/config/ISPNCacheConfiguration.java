@@ -16,38 +16,42 @@
  */
 package org.everit.osgi.cache.infinispan.config;
 
+import java.util.Map;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.everit.osgi.cache.api.CacheConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 public class ISPNCacheConfiguration<K, V> implements CacheConfiguration<K, V> {
 
-    private String cacheName = null;
+    private final String cacheName;
 
-    private Clustering clustering = null;
+    private final Map<String, Object> properties;
 
-    private DeadlockDetection deadlockDetection = null;
+    private final TransactionManager transactionManager;
+
+    private final TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+
+    public ISPNCacheConfiguration(final String cacheName, final Map<String, Object> properties,
+            final TransactionManager transactionManager,
+            final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+        this.cacheName = cacheName;
+        this.properties = properties;
+        this.transactionManager = transactionManager;
+        this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
+    }
+
+    public void applySettingsOnConfigurationBuilder(final ConfigurationBuilder configurationBuilder) {
+
+    }
 
     public String getCacheName() {
         return cacheName;
     }
 
-    public Clustering getClustering() {
-        return clustering;
+    public Map<String, Object> getProperties() {
+        return properties;
     }
-
-    public DeadlockDetection getDeadlockDetection() {
-        return deadlockDetection;
-    }
-
-    public void setCacheName(final String cacheName) {
-        this.cacheName = cacheName;
-    }
-
-    public void setClustering(final Clustering clustering) {
-        this.clustering = clustering;
-    }
-
-    public void setDeadlockDetection(final DeadlockDetection deadlockDetection) {
-        this.deadlockDetection = deadlockDetection;
-    }
-
 }

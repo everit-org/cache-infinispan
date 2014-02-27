@@ -30,7 +30,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
-import org.everit.osgi.cache.infinispan.config.CacheConstants;
+import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -50,11 +50,11 @@ import org.osgi.service.log.LogService;
  */
 @Component(ds = true, metatype = true, configurationFactory = true, policy = ConfigurationPolicy.REQUIRE)
 @org.apache.felix.scr.annotations.Properties({
-        @Property(name = CacheConstants.PROP_CF_CLUSTERED, boolValue = false),
-        @Property(name = CacheConstants.PROP_CF_TRANSPORT_CLUSTER_NAME),
-        @Property(name = CacheConstants.PROP_CF_TRANSPORT_MACHINE_ID),
-        @Property(name = CacheConstants.PROP_CF_TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, intValue = 4 * 60 * 1000),
-        @Property(name = CacheConstants.PROP_CF_TRANSPORT_CONFIGURATION_XML),
+        @Property(name = CacheFactoryProps.CLUSTERED, boolValue = false),
+        @Property(name = CacheFactoryProps.TRANSPORT_CLUSTER_NAME),
+        @Property(name = CacheFactoryProps.TRANSPORT_MACHINE_ID),
+        @Property(name = CacheFactoryProps.TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, intValue = 4 * 60 * 1000),
+        @Property(name = CacheFactoryProps.TRANSPORT_CONFIGURATION_XML),
         @Property(name = "logService.target")
 })
 @Service
@@ -79,40 +79,40 @@ public class CacheFactoryComponent implements CacheFactory {
         builder.classLoader(new MergedClassLoader(new ClassLoader[] { componentClassLoader,
                 JGroupsTransport.class.getClassLoader() }));
 
-        boolean clustered = getBooleanConfigValue(CacheConstants.PROP_CF_CLUSTERED);
+        boolean clustered = getBooleanConfigValue(CacheFactoryProps.CLUSTERED);
         if (clustered) {
             builder.clusteredDefault();
             TransportConfigurationBuilder transport = builder.transport();
-            String clusterName = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_CLUSTER_NAME, false);
+            String clusterName = getStringConfigValue(CacheFactoryProps.TRANSPORT_CLUSTER_NAME, false);
             if (clusterName != null) {
                 transport.clusterName(clusterName);
             }
             Integer distributedSyncTimeout = getIntegerConfigValue(
-                    CacheConstants.PROP_CF_TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, false);
+                    CacheFactoryProps.TRANSPORT_DISTRIBUTED_SYNC_TIMEOUT, false);
             if (distributedSyncTimeout != null) {
                 transport.distributedSyncTimeout(distributedSyncTimeout);
             }
 
-            String machineId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_MACHINE_ID, false);
+            String machineId = getStringConfigValue(CacheFactoryProps.TRANSPORT_MACHINE_ID, false);
             if (machineId != null) {
                 transport.machineId(machineId);
             }
 
-            String nodeName = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_NODE_NAME, false);
+            String nodeName = getStringConfigValue(CacheFactoryProps.TRANSPORT_NODE_NAME, false);
             if (nodeName != null) {
                 transport.nodeName(nodeName);
             }
 
-            String rackId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_RACK_ID, false);
+            String rackId = getStringConfigValue(CacheFactoryProps.TRANSPORT_RACK_ID, false);
             if (rackId != null) {
                 transport.rackId(rackId);
             }
 
-            String siteId = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_RACK_ID, false);
+            String siteId = getStringConfigValue(CacheFactoryProps.TRANSPORT_RACK_ID, false);
             if (siteId != null) {
                 transport.siteId(siteId);
             }
-            String configurationXml = getStringConfigValue(CacheConstants.PROP_CF_TRANSPORT_CONFIGURATION_XML, false);
+            String configurationXml = getStringConfigValue(CacheFactoryProps.TRANSPORT_CONFIGURATION_XML, false);
             if (configurationXml != null) {
                 transport.addProperty("configurationXml", configurationXml);
             }

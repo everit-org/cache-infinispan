@@ -23,12 +23,86 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
-import org.everit.osgi.cache.infinispan.config.CacheConstants;
+import org.everit.osgi.cache.infinispan.config.CacheProps;
 
 @Component(configurationFactory = true, immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
-@Properties({ @Property(name = CacheConstants.PROP_CC_CACHE_NAME), @Property(name = CacheConstants.PROP_CC_MAX_ENTRIES) })
+@Properties({
+        @Property(name = CacheProps.CACHE_NAME),
+        @Property(name = CacheProps.EVICTION__MAX_ENTRIES, intValue = -1),
+        @Property(name = CacheProps.EVICTION__STRATEGY, options = {
+                @PropertyOption(name = CacheProps.EVICTION__STRATEGY_OPT_NONE,
+                        value = CacheProps.EVICTION__STRATEGY_OPT_NONE),
+                @PropertyOption(name = CacheProps.EVICTION__STRATEGY_OPT_UNORDERED,
+                        value = CacheProps.EVICTION__STRATEGY_OPT_UNORDERED),
+                @PropertyOption(name = CacheProps.EVICTION__STRATEGY_OPT_LRU,
+                        value = CacheProps.EVICTION__STRATEGY_OPT_LRU),
+                @PropertyOption(name = CacheProps.EVICTION__STRATEGY_OPT_LIRS,
+                        value = CacheProps.EVICTION__STRATEGY_OPT_LIRS) }),
+        @Property(name = CacheProps.EVICTION__THREAD_POLICY, options = {
+                @PropertyOption(name = CacheProps.EVICTION__THREAD_POLICY_OPT_DEFAULT,
+                        value = CacheProps.EVICTION__THREAD_POLICY_OPT_DEFAULT),
+                @PropertyOption(name = CacheProps.EVICTION__THREAD_POLICY_OPT_PIGGYBACK,
+                        value = CacheProps.EVICTION__THREAD_POLICY_OPT_PIGGYBACK) }),
+        @Property(name = CacheProps.EXPIRATION__LIFESPAN, longValue = -1),
+        @Property(name = CacheProps.EXPIRATION__MAX_IDLE, longValue = -1),
+        @Property(name = CacheProps.EXPIRATION__REAPER_ENABLED, boolValue = true),
+        @Property(name = CacheProps.EXPIRATION__WAKE_UP_INTERVAL, longValue = 60000),
+        // TODO support persistence stores @Property(name = CacheProps.PERSISTENCE__PASSIVATION, boolValue = false),
+        @Property(name = CacheProps.INVOCATION_BATCHING__ENABLED, boolValue = false),
+        @Property(name = CacheProps.CLUSTERING__CACHE_MODE,
+                options = { @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
+                        value = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHEMODE_OPT_REPL_SYNC,
+                                value = CacheProps.CLUSTERING__CACHEMODE_OPT_REPL_SYNC),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_REPL_ASYNC,
+                                value = CacheProps.CLUSTERING__CACHE_MODE_OPT_REPL_ASYNC),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_INVALIDATION_SYNC,
+                                value = CacheProps.CLUSTERING__CACHE_MODE_OPT_INVALIDATION_SYNC),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_INVALIDATION_ASYNC,
+                                value = CacheProps.CLUSTERING__CACHE_MODE_OPT_INVALIDATION_ASYNC),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_DIST_SYNC,
+                                value = CacheProps.CLUSTERING__CACHE_MODE_OPT_DIST_SYNC),
+                        @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_DIST_ASYNC,
+                                value = CacheProps.CLUSTERING__CACHE_MODE_OPT_DIST_ASYNC) }),
+        @Property(name = CacheProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, boolValue = false),
+        @Property(name = CacheProps.CLUSTERING__ASYNC__USE_REPL_QUEUE, boolValue = false),
+        @Property(name = CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, longValue = 5000),
+        @Property(name = CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS, intValue = 1000),
+        @Property(name = CacheProps.CLUSTERING__HASH__NUM_OWNERS, intValue = 2),
+        @Property(name = CacheProps.CLUSTERING__HASH__NUM_SEGMENTS, intValue = 60),
+        @Property(name = CacheProps.CLUSTERING__HASH__CAPACITY_FACTOR, floatValue = 1),
+        @Property(name = CacheProps.CLUSTERING__L1__ENABLED, boolValue = false),
+        @Property(name = CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, intValue = 0),
+        @Property(name = CacheProps.CLUSTERING__L1__LIFESPAN, longValue = 600000),
+        // TODO on rehash must be nullable
+        @Property(name = CacheProps.CLUSTERING__L1__ON_REHASH, boolValue = true),
+        @Property(name = CacheProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, longValue = 600000),
+        // TODO must be nullable
+        @Property(name = CacheProps.CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE, boolValue = false),
+        // TODO must be nullable
+        @Property(name = CacheProps.CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER,
+                boolValue = false),
+        @Property(name = CacheProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE, intValue = 10000),
+        @Property(name = CacheProps.CLUSTERING__STATE_TRANSFER__TIMEOUT, longValue = 4 * 60 * 1000),
+        @Property(name = CacheProps.CLUSTERING__SYNC__REPL_TIMEOUT, longValue = 15000),
+        @Property(name = CacheProps.LOCKING__CONCURRENCY_LEVEL, intValue = 32),
+        @Property(name = CacheProps.LOCKING__ISOLATION_LEVEL, options = {
+                @PropertyOption(name = CacheProps.LOCKING__ISOLATION_LEVEL_OPT_READ_COMMITTED,
+                        value = CacheProps.LOCKING__ISOLATION_LEVEL_OPT_READ_COMMITTED),
+                @PropertyOption(name = CacheProps.LOCKING__ISOLATION_LEVEL_OPT_REPEATABLE_READ,
+                        value = CacheProps.LOCKING__ISOLATION_LEVEL_OPT_REPEATABLE_READ) }),
+        @Property(name = CacheProps.LOCKING__LOCK_ACQUISITION_TIMEOUT, longValue = 10000),
+        @Property(name = CacheProps.LOCKING__USE_LOCK_STRIPING, boolValue = false),
+        @Property(name = CacheProps.LOCKING_WRITE_SKEW_CHECK, boolValue = false),
+        @Property(name = CacheProps.DEADLOCK_DETECTION__ENABLED, boolValue = false),
+        @Property(name = CacheProps.DEADLOCKDETECTION__SPIN_DURATION, longValue = 100),
+        @Property(name = CacheProps.TRANSACTION__AUTO_COMMIT, boolValue = true),
+        @Property(name = CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT, longValue = 30000),
+
+        @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false) })
 @Service
 public class ISPNCacheConfigurationComponent<K, V> implements CacheConfiguration<K, V> {
 

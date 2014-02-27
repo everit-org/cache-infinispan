@@ -27,7 +27,7 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheFactory;
-import org.everit.osgi.cache.infinispan.config.CacheConstants;
+import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.everit.osgi.dev.testrunner.TestDuringDevelopment;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,61 +95,61 @@ public class CacheFactoryComponentTest
     public void configParametersTest() {
 
         Map<String, Object> config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_DIST_ASYNC);
-        config.put(CacheConstants.PARAM_WAKEUPINTERVAL, 60000L);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_DIST_ASYNC);
+        config.put(CacheProps.PARAM_WAKEUPINTERVAL, 60000L);
         Cache<String, Object> cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, 155);
-        config.put(CacheConstants.PARAM_WAKEUPINTERVAL, "500");
-        config.put(CacheConstants.PARAM_MAXIDLE, "tizenot");
+        config.put(CacheProps.PARAM_CACHEMODE, 155);
+        config.put(CacheProps.PARAM_WAKEUPINTERVAL, "500");
+        config.put(CacheProps.PARAM_MAXIDLE, "tizenot");
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_MAXIDLE, "tizenot");
+        config.put(CacheProps.PARAM_MAXIDLE, "tizenot");
         cache = cacheFactory.createCache(10, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_INVALIDATION_ASYNC);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_INVALIDATION_ASYNC);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_INVALIDATION_SYNC);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_INVALIDATION_SYNC);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_LOCAL);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_LOCAL);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_REPL_ASYNC);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_REPL_ASYNC);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_REPL_SYNC);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_REPL_SYNC);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, "value");
+        config.put(CacheProps.PARAM_CACHEMODE, "value");
         cache = cacheFactory.createCache(10, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_DIST_SYNC);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_DIST_SYNC);
         cache = cacheFactory.createCache(30, config);
         cache.close();
 
         config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_DIST_SYNC);
-        config.put(CacheConstants.PARAM_NUMOWNERS, "ot");
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_DIST_SYNC);
+        config.put(CacheProps.PARAM_NUMOWNERS, "ot");
         cache = cacheFactory.createCache(30, config);
         cache.close();
     }
@@ -179,9 +179,9 @@ public class CacheFactoryComponentTest
     public void maxIdleTest()
     {
         Map<String, Object> config = new HashMap<String, Object>();
-        config.put(CacheConstants.PARAM_MAXIDLE, 1000L);
-        config.put(CacheConstants.PARAM_NUMOWNERS, 3);
-        config.put(CacheConstants.PARAM_CACHEMODE, CacheConstants.CACHEMODE_DIST_SYNC);
+        config.put(CacheProps.PARAM_MAXIDLE, 1000L);
+        config.put(CacheProps.PARAM_NUMOWNERS, 3);
+        config.put(CacheProps.PARAM_CACHEMODE, CacheProps.CACHEMODE_DIST_SYNC);
 
         Cache<String, Object> cache = cacheFactory.createCache(30, config);
 
