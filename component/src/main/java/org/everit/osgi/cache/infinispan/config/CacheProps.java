@@ -16,6 +16,14 @@
  */
 package org.everit.osgi.cache.infinispan.config;
 
+import java.util.Map;
+
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
+import org.infinispan.configuration.cache.RecoveryConfiguration;
+
 /**
  * Defines standard names for infinispan cache factory component configuration
  */
@@ -38,15 +46,13 @@ public final class CacheProps {
      * If useReplQueue is set to true, this attribute controls how often the asynchronous thread used to flush the
      * replication queue runs.
      */
-    public static final String CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL =
-            "clustering.async.replQueueInterval";
+    public static final String CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL = "clustering.async.replQueueInterval";
 
     /**
      * If useReplQueue is set to true, this attribute can be used to trigger flushing of the queue when it reaches a
      * specific threshold.
      */
-    public static final String CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS =
-            "clustering.async.replQueueMaxElements";
+    public static final String CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS = "clustering.async.replQueueMaxElements";
 
     /**
      * If true, forces all async communications to be queued up and sent out periodically as a batch.
@@ -125,8 +131,7 @@ public final class CacheProps {
     /**
      * How often the L1 requestors map is cleaned up of stale items
      */
-    public static final String CLUSTERING__L1__CLEANUP_TASK_FREQUENCY =
-            "clustering.l1.cleanupTaskFrequency";
+    public static final String CLUSTERING__L1__CLEANUP_TASK_FREQUENCY = "clustering.l1.cleanupTaskFrequency";
     /**
      * Enables L1 cache. Used in 'distributed' caches instances. In any other cache modes, this is ignored.
      */
@@ -145,8 +150,7 @@ public final class CacheProps {
      * will be always be used.
      * </p>
      */
-    public static final String CLUSTERING__L1__INVALIDATION_TRESHOLD =
-            "clustering.l1.invalidationThreshold";
+    public static final String CLUSTERING__L1__INVALIDATION_TRESHOLD = "clustering.l1.invalidationThreshold";
 
     /**
      * Maximum lifespan of an entry placed in the L1 cache.
@@ -167,8 +171,7 @@ public final class CacheProps {
      * (transparent) remote access. While this will not have any impact on the logic of your application it might impact
      * performance.
      */
-    public static final String CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER =
-            "clustering.stateTransfer.awaitInitialTransfer";
+    public static final String CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER = "clustering.stateTransfer.awaitInitialTransfer";
 
     /**
      * If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries. If &lt;= 0, the state
@@ -184,8 +187,7 @@ public final class CacheProps {
      * because a cache left the cluster). Disabling this setting means a key will sometimes have less than
      * {@code numOwner} owners.
      */
-    public static final String CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE =
-            "clustering.stateTransfer.fetchInMemoryState";
+    public static final String CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE = "clustering.stateTransfer.fetchInMemoryState";
 
     /**
      * This is the maximum amount of time - in milliseconds - to wait for state from neighboring caches, before throwing
@@ -322,28 +324,6 @@ public final class CacheProps {
      */
     public static final String PERSISTENCE__PASSIVATION = "persistence.passivation";
 
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
-    public static final String TRANSACTION_ = "transaction.";
-
     /**
      * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
      * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back
@@ -365,7 +345,125 @@ public final class CacheProps {
      */
     public static final String TRANSACTION__CACHE_STOP_TIMEOUT = "transaction.cacheStopTimeout";
 
+    /**
+     * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 15000.
+     */
+    public static final String TRANSACTION__COMPLETED_TX_TIMEOUT = "transaction.completedTxTimeout";
+
+    /**
+     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then the
+     * locking mode is ignored.
+     * 
+     * <a href="http://community.jboss.org/wiki/OptimisticLockingInInfinispan"></a>OPTIMISTIC</a> or PESSIMISTIC.
+     * 
+     * @see org.infinispan.config.Configuration#isTransactionalCache()
+     */
     public static final String TRANSACTION__LOCKING_MODE = "transaction.lockingMode";
+
+    public static final String TRANSACTION__LOCKING_MODE_OPT_OPTIMISTIC = "OPTIMISTIC";
+
+    public static final String TRANSACTION__LOCKING_MODE_OPT_PESSIMISTIC = "PESSIMISTIC";
+
+    /**
+     * The time interval (millis) at which the thread that cleans up transaction completion information kicks in.
+     * Defaults to 1000.
+     */
+    public static final String TRANSACTION__REAPER_WAKE_UP_INTERVAL = "transaction.reaperWakeUpInterval";
+
+    /**
+     * Enable recovery for this cache
+     */
+    public static final String TRANSACTION__RECOVERY__ENABLED = "transaction.recovery.enabled";
+
+    /**
+     * Sets the name of the cache where recovery related information is held. If not specified defaults to a cache named
+     * {@link RecoveryConfiguration#DEFAULT_RECOVERY_INFO_CACHE}
+     */
+    public static final String TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME =
+            "transaction.recovery.recoveryInfoCacheName";
+
+    /**
+     * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be synchronous, so Infinispan
+     * will wait for responses from all nodes to which the commit was sent. Otherwise, the commit phase will be
+     * asynchronous. Keeping it as false improves performance of 2PC transactions, since any remote failures are trapped
+     * during the prepare phase anyway and appropriate rollbacks are issued.
+     * <p/>
+     * This configuration property may be adjusted at runtime
+     */
+    public static final String TRANSACTION__SYNC_COMMIT_PHASE = "transaction.syncCommitPhase";
+
+    /**
+     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be synchronous, so
+     * Infinispan will wait for responses from all nodes to which the rollback was sent. Otherwise, the rollback phase
+     * will be asynchronous. Keeping it as false improves performance of 2PC transactions.
+     * <p />
+     * 
+     * This configuration property may be adjusted at runtime.
+     */
+    public static final String TRANSACTION__SYNC_ROLLBACK_PHASE = "transaction.syncRollbackPhase";
+
+    /**
+     * OSGi filter expression for the transaction manager service.
+     */
+    public static final String TRANSACTION__TRANSACTION_MANAGER__TARGET = "transactionManager.target";
+
+    /**
+     * DEFAULT: uses the 2PC protocol, TOTAL_ORDER: uses the total order protocol
+     */
+    public static final String TRANSACTION__TRANSACTION_PROTOCOL = "transaction.transactionProtocol";
+
+    public static final String TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT = "DEFAULT";
+
+    public static final String TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER = "TOTAL_ORDER";
+
+    /**
+     * OSGi filter expression for the transaction synchronization registry service.
+     */
+    public static final String TRANSACTION__TRANSACTION_SYNCHRONIZATION_REGISTRY__TARGET =
+            "transactionSynchronizationRegistry.target";
+
+    /**
+     * Before Infinispan 5.1 you could access the cache both transactionally and non-transactionally. Naturally the
+     * non-transactional access is faster and offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
+     * access is no longer supported, so if you wanna speed up transactional caches and you're ready to trade some
+     * consistency guarantees, you can enable use1PcForAutoCommitTransactions.
+     * <p/>
+     * 
+     * What this configuration option does is force an induced transaction, that has been started by Infinispan as a
+     * result of enabling autoCommit, to commit in a single phase. So only 1 RPC instead of 2RPCs as in the case of a
+     * full 2 Phase Commit (2PC).
+     */
+    public static final String TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS =
+            "transaction.use1PcForAutoCommitTransactions";
+
+    /**
+     * Configures whether the cache registers a synchronization with the transaction manager, or registers itself as an
+     * XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery
+     * as well, and registering a synchronization is significantly more efficient. <br>
+     * If true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a
+     * {@link TransactionManager}.
+     */
+    public static final String TRANSACTION__USE_SYNCHRONIZATION = "transaction.useSynchronization";
+
+    /**
+     * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
+     * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
+     * <p />
+     * Providing return values can be expensive as they may entail a read from disk or across a network, and if the
+     * usage of these methods never make use of these return values, allowing unreliable return values helps Infinispan
+     * optimize away these remote calls or disk reads.
+     * <p />
+     * If true, return values for the methods described above should not be relied on.
+     */
+    public static final String UNSAFE__UNRELIABLE_RETURN_VALUES = "unsafe.unreliableReturnValues";
+
+    public static final String VERSIONING__ENABLED = "versioning.enabled";
+
+    public static final String VERSIONING__SCHEME = "versioning.scheme";
+
+    public static final String VERSIONING__SCHEME_OPT_NONE = "NONE";
+
+    public static final String VERSIONING__SCHEME_OPT_SIMPLE = "SIMPLE";
 
     private CacheProps() {
     }

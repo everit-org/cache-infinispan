@@ -99,9 +99,15 @@ import org.everit.osgi.cache.infinispan.config.CacheProps;
         @Property(name = CacheProps.LOCKING_WRITE_SKEW_CHECK, boolValue = false),
         @Property(name = CacheProps.DEADLOCK_DETECTION__ENABLED, boolValue = false),
         @Property(name = CacheProps.DEADLOCKDETECTION__SPIN_DURATION, longValue = 100),
-        @Property(name = CacheProps.TRANSACTION__AUTO_COMMIT, boolValue = true),
-        @Property(name = CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT, longValue = 30000),
-
+        @Property(name = CacheProps.VERSIONING__ENABLED, boolValue = false),
+        @Property(name = CacheProps.VERSIONING__SCHEME, value = CacheProps.VERSIONING__SCHEME_OPT_NONE,
+                options = { @PropertyOption(name = CacheProps.VERSIONING__SCHEME_OPT_NONE,
+                        value = CacheProps.VERSIONING__SCHEME_OPT_NONE),
+                        @PropertyOption(name = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE,
+                                value = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE) }),
+        @Property(name = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE, boolValue = false),
+        // TODO support sites configuration
+        // TODO support compatibility mode configuration
         @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false) })
 @Service
 public class ISPNCacheConfigurationComponent<K, V> implements CacheConfiguration<K, V> {
@@ -110,5 +116,4 @@ public class ISPNCacheConfigurationComponent<K, V> implements CacheConfiguration
     public void activate(final Map<String, Object> configuration) {
 
     }
-
 }

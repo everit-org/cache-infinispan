@@ -15,21 +15,20 @@
  * along with Everit - Infinispan Cache Tests.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.everit.osgi.cache.infinispan.tests;
+
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
-@Component(immediate = true)
-@Service(value = ConfigurationInitComponent.class)
+//@Component(immediate = true)
+//@Service(value = ConfigurationInitComponent.class)
 public class ConfigurationInitComponent {
 
     @Reference(bind = "bindConfigAdmin")
