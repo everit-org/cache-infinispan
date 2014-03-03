@@ -16,6 +16,8 @@
  */
 package org.everit.osgi.cache.infinispan.internal;
 
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 
@@ -27,7 +29,6 @@ import org.apache.felix.scr.annotations.ConfigurationPolicy;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
@@ -36,11 +37,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.jcache.JCacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.component.ComponentException;
 import org.osgi.service.log.LogService;
@@ -57,17 +58,21 @@ import org.osgi.service.log.LogService;
         @Property(name = CacheFactoryProps.TRANSPORT_CONFIGURATION_XML),
         @Property(name = "logService.target")
 })
-@Service
 public class CacheFactoryComponent implements CacheFactory {
 
+
     private Map<String, ?> componentConfiguration;
-    private JCacheManager jCacheManager;
     @Reference
     private LogService logService;
 
     private EmbeddedCacheManager manager;
 
     private Properties properties = new Properties();
+
+    private boolean clustered;
+
+    private ServiceRegistration<CacheFactory> serviceRegistration = null;
+    
 
     @Activate
     public void activate(final BundleContext context, final Map<String, ?> config) {
@@ -78,8 +83,11 @@ public class CacheFactoryComponent implements CacheFactory {
         GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
         builder.classLoader(new MergedClassLoader(new ClassLoader[] { componentClassLoader,
                 JGroupsTransport.class.getClassLoader() }));
+        
+        Dictionary<String, Object> serviceProperties = new Hashtable<String, Object>();
 
-        boolean clustered = getBooleanConfigValue(CacheFactoryProps.CLUSTERED);
+        clustered = getBooleanConfigValue(CacheFactoryProps.CLUSTERED);
+        serviceProperties.put(CacheFactoryProps.CLUSTERED, clustered);
         if (clustered) {
             builder.clusteredDefault();
             TransportConfigurationBuilder transport = builder.transport();
@@ -122,8 +130,9 @@ public class CacheFactoryComponent implements CacheFactory {
 
         GlobalConfiguration globalConfig = builder.build();
         manager = new DefaultCacheManager(globalConfig);
-        jCacheManager = new JCacheManager(null, manager, null);
+        manager.start();
 
+        context.registerService(CacheFactory.class, this, serviceProperties);
     }
 
     @Override
@@ -136,9 +145,6 @@ public class CacheFactoryComponent implements CacheFactory {
             cb.classLoader(classLoader);
         }
 
-        // cb.invocationBatching()
-        // cb.eviction().maxEntries(maxEntries);
-        //
         // if (params != null) {
         // if (params.containsKey(CacheConstants.PARAM_MAXIDLE)
         // && (params.get(CacheConstants.PARAM_MAXIDLE) instanceof Long)) {
@@ -199,7 +205,9 @@ public class CacheFactoryComponent implements CacheFactory {
      */
     @Deactivate
     public void deactivate() {
-        jCacheManager.close();
+        if (manager != null) {
+            manager.stop();
+        }
     }
 
     private boolean getBooleanConfigValue(final String key) {
@@ -246,68 +254,5 @@ public class CacheFactoryComponent implements CacheFactory {
                     + value.getClass().toString());
         }
         return (String) value;
-    }
-
-    /**
-     * This method checks the validity of the given configuration and sets them to the properties variable.
-     * 
-     * @param config
-     *            The new configuration of the component.
-     */
-    public void modified(final Map<String, Object> config) {
-        Object clusterName = config.get("clusterName");
-        if (clusterName != null) {
-            if (!(clusterName instanceof String)) {
-                throw new RuntimeException("Expected type for clusterName is String but got "
-                        + clusterName.getClass());
-            }
-            properties.setProperty("clusterName", (String) clusterName);
-        }
-
-        Object multicastPort = config.get("multicastPort");
-        if (multicastPort != null) {
-            if (!(multicastPort instanceof String)) {
-                throw new RuntimeException("Expected type for multicastPort is String but got "
-                        + multicastPort.getClass());
-            }
-
-            int i = Integer.parseInt((String) multicastPort);
-            if ((i < 0) || (i > 65535)) {
-                throw new RuntimeException(
-                        "The given port number in not valid. It is not within the 0-65535 range.");
-            }
-            properties.setProperty("mcast_port", "mcast_port=" + '"' + multicastPort + '"');
-        } else {
-            properties.setProperty("mcast_port", "");
-        }
-
-        Object multicastAddress = config.get("multicastAddress");
-        if (multicastAddress != null) {
-            if (multicastAddress instanceof String) {
-                String ip = (String) multicastAddress;
-
-                String[] parts = ip.split("\\.");
-                if (parts.length != 4) {
-                    throw new RuntimeException(
-                            "The given IP address in not valid. There are not 4 parts of the address.");
-                }
-
-                for (String s : parts) {
-                    int i = Integer.parseInt(s);
-                    if ((i < 0) || (i > 255)) {
-                        throw new RuntimeException(
-                                "The given IP address in not valid. One of the parts is not within the 0-255 range.");
-                    }
-                }
-
-            } else {
-                throw new RuntimeException("Expected type for multicastAddress is String but got "
-                        + multicastAddress.getClass());
-            }
-
-            properties.setProperty("mcast_addr", "mcast_addr=" + '"' + multicastAddress + '"');
-        } else {
-            properties.setProperty("mcast_addr", "");
-        }
     }
 }

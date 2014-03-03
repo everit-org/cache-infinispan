@@ -140,7 +140,7 @@
 
     <dependency>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-jcache</artifactId>
+      <artifactId>infinispan-core</artifactId>
       <version>6.0.1.Final</version>
       <exclusions>
         <exclusion>
@@ -160,6 +160,11 @@
           <groupId>org.jboss.marshalling</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.everit.osgi.bundles</groupId>
+      <artifactId>org.everit.osgi.bundles.javax.cache.cache-api</artifactId>
+      <version>1.0.0-PFD</version>
     </dependency>
 
     <dependency>

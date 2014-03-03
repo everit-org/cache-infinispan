@@ -248,6 +248,7 @@ public final class CacheProps {
      * Note that this can be overridden on a per-entry basis by using the Cache API.
      */
     public static final String EXPIRATION__LIFESPAN = "expiration.lifespan";
+    
     /**
      * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded,
      * the entry will be expired cluster-wide. -1 means the entries never expire.
