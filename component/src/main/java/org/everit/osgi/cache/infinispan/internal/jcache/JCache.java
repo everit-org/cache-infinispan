@@ -36,7 +36,6 @@ import java.util.concurrent.TimeoutException;
 import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
-import javax.cache.Cache.Entry;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
 import javax.cache.configuration.Configuration;
 import javax.cache.configuration.Factory;
