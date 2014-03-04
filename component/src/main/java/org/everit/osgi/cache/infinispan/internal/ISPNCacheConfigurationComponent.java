@@ -28,7 +28,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
 
-@Component(configurationFactory = true, immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
+@Component(name = "org.everit.osgi.cache.infinispan.ISPNCacheConfiguration", configurationFactory = true, immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
 @Properties({
         @Property(name = CacheProps.CACHE_NAME),
         @Property(name = CacheProps.EVICTION__MAX_ENTRIES, intValue = -1),

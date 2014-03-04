@@ -16,16 +16,21 @@
  */
 package org.everit.osgi.cache.infinispan.internal;
 
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
+import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
 
-@Component(configurationFactory = true, immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
+@Component(name = "org.everit.osgi.cache.infinispan.ISPNTransactionalCacheConfiguration", configurationFactory = true,
+        immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
 @Properties({
         @Property(name = CacheProps.CACHE_NAME),
         @Property(name = CacheProps.EVICTION__MAX_ENTRIES, intValue = -1),
@@ -127,11 +132,15 @@ import org.everit.osgi.cache.infinispan.config.CacheProps;
                         value = CacheProps.VERSIONING__SCHEME_OPT_NONE),
                         @PropertyOption(name = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE,
                                 value = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE) }),
-        @Property(name = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE, boolValue = false),
         // TODO support sites configuration
         // TODO support compatibility mode configuration
         @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false) })
 @Service
 public class ISPNTransactionalCacheConfigurationComponent<K, V> implements CacheConfiguration<K, V> {
 
+    @Reference
+    private TransactionManager transactionManager;
+    
+    @Reference
+    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 }
