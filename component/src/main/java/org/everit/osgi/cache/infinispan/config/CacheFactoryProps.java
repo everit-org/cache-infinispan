@@ -33,7 +33,7 @@ public final class CacheFactoryProps {
     public static final String TRANSPORT__CLUSTER_NAME = "transport.clusterName";
 
     /**
-     * The full JGroups XML configuration. Should be pasted in one row.
+     * The full JGroups configuration XML. Should be pasted in one row.
      */
     public static final String TRANSPORT__CONFIGURATION_XML = "transport.configurationXML";
 
