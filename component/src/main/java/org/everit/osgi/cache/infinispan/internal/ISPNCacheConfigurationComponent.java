@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
@@ -27,6 +30,7 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
+import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
@@ -36,6 +40,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -176,6 +185,13 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
     private Configuration configuration = null;
     
     private String cacheName = null;
+    
+    @Reference
+    private TransactionManager transactionManager;
+    
+    @Reference
+    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+    
 
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentConfiguration) {
@@ -235,6 +251,40 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
             h.applyConfigOnBuilderValue(CacheProps.DEADLOCKDETECTION__SPIN_DURATION, long.class, false);
         }
 
+        String transactionModeString = cch.getPropValue(CacheProps.TRANSACTION__TRANSACTION_MODE, String.class, false);
+        if (transactionModeString != null && !CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT.equals(transactionModeString)) {
+            h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__TRANSACTION_MODE, TransactionMode.class, false);    
+        }
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__AUTO_COMMIT, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__LOCKING_MODE, LockingMode.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__SYNC_COMMIT_PHASE, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__SYNC_ROLLBACK_PHASE, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__USE_SYNCHRONIZATION, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__RECOVERY__ENABLED, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME, String.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__COMPLETED_TX_TIMEOUT, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__TRANSACTION_PROTOCOL, TransactionProtocol.class, false);
+        
+        builder.transaction().transactionManagerLookup(new TransactionManagerLookup() {
+            
+            @Override
+            public TransactionManager getTransactionManager() throws Exception {
+                return transactionManager;
+            }
+        });
+        
+        builder.transaction().transactionSynchronizationRegistryLookup(new TransactionSynchronizationRegistryLookup() {
+            
+            @Override
+            public TransactionSynchronizationRegistry getTransactionSynchronizationRegistry() throws Exception {
+                return transactionSynchronizationRegistry;
+            }
+        });
+        
+        
         Boolean versioning = h.applyConfigOnBuilderValue(CacheProps.VERSIONING__ENABLED, boolean.class, false);
         if (versioning != null && versioning) {
             h.applyConfigOnBuilderValue(CacheProps.VERSIONING__SCHEME, VersioningScheme.class, false);
@@ -287,6 +337,21 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.transferProperty(CacheProps.LOCKING_WRITE_SKEW_CHECK);
         h.transferProperty(CacheProps.DEADLOCK_DETECTION__ENABLED);
         h.transferProperty(CacheProps.DEADLOCKDETECTION__SPIN_DURATION);
+        
+        h.transferProperty(CacheProps.TRANSACTION__TRANSACTION_MODE);
+        h.transferProperty(CacheProps.TRANSACTION__AUTO_COMMIT);
+        h.transferProperty(CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT);
+        h.transferProperty(CacheProps.TRANSACTION__LOCKING_MODE);
+        h.transferProperty(CacheProps.TRANSACTION__SYNC_COMMIT_PHASE);
+        h.transferProperty(CacheProps.TRANSACTION__SYNC_ROLLBACK_PHASE);
+        h.transferProperty(CacheProps.TRANSACTION__USE_SYNCHRONIZATION);
+        h.transferProperty(CacheProps.TRANSACTION__RECOVERY__ENABLED);
+        h.transferProperty(CacheProps.TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME);
+        h.transferProperty(CacheProps.TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS);
+        h.transferProperty(CacheProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL);
+        h.transferProperty(CacheProps.TRANSACTION__COMPLETED_TX_TIMEOUT);
+        h.transferProperty(CacheProps.TRANSACTION__TRANSACTION_PROTOCOL);
+        
         h.transferProperty(CacheProps.VERSIONING__ENABLED);
         h.transferProperty(CacheProps.VERSIONING__SCHEME);
         h.transferProperty(CacheProps.JMX_STATISTICS__ENABLED);

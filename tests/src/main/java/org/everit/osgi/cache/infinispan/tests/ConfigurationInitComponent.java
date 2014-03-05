@@ -21,14 +21,18 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
+import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
+import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
-//@Component(immediate = true)
-//@Service(value = ConfigurationInitComponent.class)
+@Component(immediate = true)
+@Service(value = ConfigurationInitComponent.class)
 public class ConfigurationInitComponent {
 
     @Reference(bind = "bindConfigAdmin")
@@ -37,12 +41,15 @@ public class ConfigurationInitComponent {
     @Activate
     public void activate(final BundleContext bundleContext) {
         try {
-            Dictionary<String, Object> props = new Hashtable<String, Object>();
-            props.put("clusterName", "testcluster");
-            props.put("multicastAddress", "228.8.8.8");
-            props.put("multicastPort", "7600");
-            getOrCreateConfiguration("org.everit.osgi.cache.infinispan.component.CacheFactoryComponent",
-                    props);
+            Dictionary<String, Object> cacheFactoryProps = new Hashtable<String, Object>();
+            cacheFactoryProps.put(CacheFactoryProps.CLUSTERED, false);
+            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME,
+                    cacheFactoryProps);
+
+            Dictionary<String, Object> cacheConfigProps = new Hashtable<String, Object>();
+            cacheConfigProps.put(CacheProps.CACHE_NAME, "nonClusteredNonTransactionalCache");
+            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME,
+                    cacheConfigProps);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -56,8 +63,7 @@ public class ConfigurationInitComponent {
     }
 
     private String getOrCreateConfiguration(final String factoryPid, final Dictionary<String, Object> props)
-            throws IOException,
-            InvalidSyntaxException {
+            throws IOException, InvalidSyntaxException {
         Configuration[] configurations = configAdmin.listConfigurations("(service.factoryPid=" + factoryPid + ")");
         if ((configurations != null) && (configurations.length > 0)) {
             return configurations[0].getPid();

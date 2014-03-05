@@ -33,6 +33,9 @@ import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
+import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
+import org.everit.osgi.cache.infinispan.internal.jcache.JCache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -50,7 +53,7 @@ import org.osgi.service.log.LogService;
 /**
  * A component that can customize and create Cache instances.
  */
-@Component(name = "org.everit.osgi.cache.infinispan.CacheFactory", metatype = true, configurationFactory = true,
+@Component(name = CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, metatype = true, configurationFactory = true,
         policy = ConfigurationPolicy.REQUIRE, immediate = true)
 @org.apache.felix.scr.annotations.Properties({
         @Property(name = CacheFactoryProps.CLUSTERED, boolValue = false),
@@ -67,7 +70,7 @@ import org.osgi.service.log.LogService;
         @Property(name = CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME),
         @Property(name = "logService.target")
 })
-public class CacheFactoryComponent implements CacheFactory {
+public class ISPNCacheFactoryComponent implements CacheFactory {
 
     private Map<String, ?> componentConfiguration;
 
@@ -229,64 +232,23 @@ public class CacheFactoryComponent implements CacheFactory {
     public <K, V> Cache<K, V> createCache(final CacheConfiguration<K, V> cacheConfiguration,
             final ClassLoader classLoader) {
 
-        Configuration dcc = manager.getDefaultCacheConfiguration();
-        ConfigurationBuilder cb = new ConfigurationBuilder().read(dcc);
+        if (!(cacheConfiguration instanceof ISPNCacheConfiguration)) {
+            throw new ComponentException("Only configurations with type " + ISPNCacheConfiguration.class.getName()
+                    + " are accepted: " + cacheConfiguration.getClass().getName());
+        }
+        ISPNCacheConfiguration<K, V> ispnCacheConfiguration = (ISPNCacheConfiguration<K, V>) cacheConfiguration;
+        Configuration configuration = ispnCacheConfiguration.getConfiguration();
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.read(configuration);
         if (classLoader != null) {
             cb.classLoader(classLoader);
         }
-
-        // if (params != null) {
-        // if (params.containsKey(CacheConstants.PARAM_MAXIDLE)
-        // && (params.get(CacheConstants.PARAM_MAXIDLE) instanceof Long)) {
-        // cb.expiration().maxIdle((Long) params.get(CacheConstants.PARAM_MAXIDLE));
-        // }
-        // if (params.containsKey(CacheConstants.PARAM_WAKEUPINTERVAL)
-        // && (params.get(CacheConstants.PARAM_WAKEUPINTERVAL) instanceof Long)) {
-        // cb.expiration().wakeUpInterval((Long) params.get(CacheConstants.PARAM_WAKEUPINTERVAL));
-        // }
-        // if (params.containsKey(CacheConstants.PARAM_CACHEMODE)
-        // && (params.get(CacheConstants.PARAM_CACHEMODE) instanceof String)) {
-        // String cacheMode = (String) params.get(CacheConstants.PARAM_CACHEMODE);
-        // CacheMode mode = null;
-        // if (CacheConstants.CACHEMODE_DIST_SYNC.equals(cacheMode)) {
-        // mode = CacheMode.DIST_SYNC;
-        // if (params.containsKey(CacheConstants.PARAM_NUMOWNERS)
-        // && (params.get(CacheConstants.PARAM_NUMOWNERS) instanceof Integer)) {
-        // cb.clustering().hash().numOwners((Integer) params.get(CacheConstants.PARAM_NUMOWNERS));
-        // }
-        // }
-        // else if (CacheConstants.CACHEMODE_DIST_ASYNC.equals(cacheMode)) {
-        // mode = CacheMode.DIST_ASYNC;
-        // }
-        // else if (CacheConstants.CACHEMODE_LOCAL.equals(cacheMode)) {
-        // mode = CacheMode.LOCAL;
-        // }
-        // else if (CacheConstants.CACHEMODE_REPL_ASYNC.equals(cacheMode)) {
-        // mode = CacheMode.REPL_ASYNC;
-        // }
-        // else if (CacheConstants.CACHEMODE_REPL_SYNC.equals(cacheMode)) {
-        // mode = CacheMode.REPL_SYNC;
-        // }
-        // else if (CacheConstants.CACHEMODE_INVALIDATION_ASYNC.equals(cacheMode)) {
-        // mode = CacheMode.INVALIDATION_ASYNC;
-        // }
-        // else if (CacheConstants.CACHEMODE_INVALIDATION_SYNC.equals(cacheMode)) {
-        // mode = CacheMode.INVALIDATION_SYNC;
-        // }
-        //
-        // if (mode != null) {
-        // cb.clustering().cacheMode(mode);
-        // }
-        // }
-        // }
-        //
-        // Configuration conf = cb.build();
-        // manager.defineConfiguration(cacheName, conf);
-        // jCacheManager.configureCache(cacheName, (AdvancedCache<Object, Object>) manager.getCache(cacheName));
-        //
-        // Cache<String, Object> cache = jCacheManager.getCache(cacheName);
-        //
-        // return cache;
+        String cacheName = ispnCacheConfiguration.getCacheName();
+        manager.defineConfiguration(cacheName, cb.build(true));
+        org.infinispan.Cache<K, V> cache = manager.getCache(cacheName);
+        AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+        advancedCache.with(classLoader);
+        JCache<K, V> jCache = new JCache<K, V>(advancedCache, configuration);
         return null;
     }
 
