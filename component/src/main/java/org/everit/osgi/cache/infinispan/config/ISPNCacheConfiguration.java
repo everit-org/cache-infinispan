@@ -16,42 +16,10 @@
  */
 package org.everit.osgi.cache.infinispan.config;
 
-import java.util.Map;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
-public class ISPNCacheConfiguration<K, V> implements CacheConfiguration<K, V> {
+public interface ISPNCacheConfiguration<K, V> extends CacheConfiguration<K, V> {
 
-    private final String cacheName;
-
-    private final Map<String, Object> properties;
-
-    private final TransactionManager transactionManager;
-
-    private final TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-
-    public ISPNCacheConfiguration(final String cacheName, final Map<String, Object> properties,
-            final TransactionManager transactionManager,
-            final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
-        this.cacheName = cacheName;
-        this.properties = properties;
-        this.transactionManager = transactionManager;
-        this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
-    }
-
-    public void applySettingsOnConfigurationBuilder(final ConfigurationBuilder configurationBuilder) {
-
-    }
-
-    public String getCacheName() {
-        return cacheName;
-    }
-
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
+    void applyValuesOnBuilder(ConfigurationBuilder builder);
 }

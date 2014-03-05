@@ -41,6 +41,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.component.ComponentException;
@@ -90,32 +91,34 @@ public class CacheFactoryComponent implements CacheFactory {
                 JGroupsTransport.class.getClassLoader() }));
 
         Dictionary<String, Object> serviceProperties = new Hashtable<String, Object>();
+        serviceProperties.put(Constants.SERVICE_PID, config.get(Constants.SERVICE_PID));
 
-        clustered = getPropValue(componentConfiguration, CacheFactoryProps.CLUSTERED, boolean.class, true);
+        ReflectiveConfigurationBuilderHelper builderHelper = new ReflectiveConfigurationBuilderHelper(
+                componentConfiguration, builder);
+
+        ReflectiveComponentConfigurationHelper configHelper = builderHelper.getComponentConfigHelper();
+
+        clustered = configHelper.getPropValue(CacheFactoryProps.CLUSTERED, boolean.class, true);
         serviceProperties.put(CacheFactoryProps.CLUSTERED, clustered);
         if (clustered) {
             serviceProperties.put(CacheFactoryProps.CLUSTERED, Boolean.TRUE);
             builder.clusteredDefault();
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__CLUSTER_NAME, builder,
-                    String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__CLUSTER_NAME, String.class, false);
 
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT,
-                    builder, long.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, long.class,
+                    false);
 
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__MACHINE_ID, builder,
-                    String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__MACHINE_ID, String.class, false);
 
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__NODE_NAME, builder,
-                    String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__NODE_NAME, String.class, false);
 
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__RACK_ID, builder,
-                    String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__RACK_ID, String.class, false);
 
-            applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.TRANSPORT__SITE_ID, builder,
-                    String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.TRANSPORT__SITE_ID, String.class, false);
 
-            String jgroupsXML = getPropValue(componentConfiguration, CacheFactoryProps.TRANSPORT__CONFIGURATION_XML,
-                    String.class, false);
+            String jgroupsXML = configHelper.getPropValue(CacheFactoryProps.TRANSPORT__CONFIGURATION_XML, String.class,
+                    false);
+
             if (jgroupsXML != null) {
                 builder.transport().addProperty("configurationXml", jgroupsXML);
             }
@@ -123,24 +126,25 @@ public class CacheFactoryComponent implements CacheFactory {
             builder.nonClusteredDefault();
         }
 
-        Boolean jmxStatisticsEnabled = getPropValue(componentConfiguration,
-                CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, Boolean.class, true);
+        Boolean jmxStatisticsEnabled = configHelper.getPropValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED,
+                Boolean.class, true);
 
         if (jmxStatisticsEnabled) {
-            applyValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, jmxStatisticsEnabled, builder, boolean.class);
+            builderHelper.applyValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, jmxStatisticsEnabled,
+                    boolean.class);
 
-            applyConfigOnBuilderValue(componentConfiguration,
-                    CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, builder, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
+                    String.class,
+                    false);
 
-            applyConfigOnBuilderValue(componentConfiguration,
-                    CacheFactoryProps.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, builder, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, String.class,
+                    false);
 
-            applyConfigOnBuilderValue(componentConfiguration,
-                    CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS, builder, Boolean.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
+                    Boolean.class, false);
         }
 
-        applyConfigOnBuilderValue(componentConfiguration, CacheFactoryProps.SITE__LOCAL_SITE, builder, String.class,
-                false);
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.SITE__LOCAL_SITE, String.class, false);
 
         GlobalConfiguration globalConfig = builder.build();
 
@@ -288,78 +292,6 @@ public class CacheFactoryComponent implements CacheFactory {
         }
         if (manager != null) {
             manager.stop();
-        }
-    }
-
-    private <V> V getPropValue(Map<String, ?> configuration, final String key, final Class<V> valueType,
-            final boolean mandatory) {
-        Object value = getObjectValue(configuration, key, mandatory);
-        if (value == null || (String.class.isInstance(value) && ((String) value).trim().equals(""))) {
-            return null;
-        }
-        if (!classify(valueType).isInstance(value)) {
-            throw new ComponentException("Type of configuration property " + key + " must be " + valueType.toString()
-                    + ". Current type is " + value.getClass().toString());
-        }
-        return (V) value;
-    }
-
-    private Class<?> classify(Class<?> potentiallyTypeOfPrimitive) {
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(boolean.class)) {
-            return Boolean.class;
-        }
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(int.class)) {
-            return Integer.class;
-        }
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(long.class)) {
-            return Long.class;
-        }
-        return potentiallyTypeOfPrimitive;
-    }
-
-    private Object getObjectValue(Map<String, ?> configuration, final String key, final boolean mandatory) {
-        Object value = configuration.get(key);
-        if (value == null && mandatory) {
-            throw new ComponentException("The value of the mandatory configuration property '" + key
-                    + "' is not defined.");
-        }
-        return value;
-    }
-
-    private void applyConfigOnBuilderValue(final Map<String, ?> componentConfig, final String key,
-            Object builder,
-            Class<?> valueType, boolean mandatory) {
-        Object propValue = getPropValue(componentConfig, key, valueType, mandatory);
-        if (propValue == null) {
-            return;
-        }
-        applyValue(key, propValue, builder, valueType);
-    }
-
-    private void applyValue(String key, Object value, Object builder, Class<?> valueType) {
-        String[] keyParts = key.split("\\.");
-        Object currentConfigObject = builder;
-        try {
-            for (int i = 0, n = keyParts.length; i < n; i++) {
-                if (i < n - 1) {
-                    Method method = currentConfigObject.getClass().getMethod(keyParts[i]);
-                    currentConfigObject = method.invoke(currentConfigObject);
-
-                } else {
-                    Method method = currentConfigObject.getClass().getMethod(keyParts[i], valueType);
-                    method.invoke(currentConfigObject, value);
-                }
-            }
-        } catch (NoSuchMethodException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
-        } catch (SecurityException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
-        } catch (IllegalAccessException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
-        } catch (IllegalArgumentException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
-        } catch (InvocationTargetException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
         }
     }
 }

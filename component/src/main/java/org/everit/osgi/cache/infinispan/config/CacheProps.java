@@ -465,6 +465,12 @@ public final class CacheProps {
     public static final String VERSIONING__SCHEME_OPT_NONE = "NONE";
 
     public static final String VERSIONING__SCHEME_OPT_SIMPLE = "SIMPLE";
+    
+    public static final String COMMON__BOOLEAN_OPT_DEFAULT = "default";
+    
+    public static final String COMMON__BOOLEAN_OPT_TRUE = "true";
+    
+    public static final String COMMON__BOOLEAN_OPT_FALSE = "false";
 
     private CacheProps() {
     }

@@ -28,6 +28,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
+import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 @Component(name = "org.everit.osgi.cache.infinispan.ISPNTransactionalCacheConfiguration", configurationFactory = true,
         immediate = false, policy = ConfigurationPolicy.REQUIRE, metatype = true)
@@ -79,7 +81,6 @@ import org.everit.osgi.cache.infinispan.config.CacheProps;
         @Property(name = CacheProps.CLUSTERING__L1__ENABLED, boolValue = false),
         @Property(name = CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, intValue = 0),
         @Property(name = CacheProps.CLUSTERING__L1__LIFESPAN, longValue = 600000),
-        // TODO on rehash must be nullable
         @Property(name = CacheProps.CLUSTERING__L1__ON_REHASH, boolValue = true),
         @Property(name = CacheProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, longValue = 600000),
         // TODO must be nullable
@@ -135,12 +136,17 @@ import org.everit.osgi.cache.infinispan.config.CacheProps;
         // TODO support sites configuration
         // TODO support compatibility mode configuration
         @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false) })
-@Service
-public class ISPNTransactionalCacheConfigurationComponent<K, V> implements CacheConfiguration<K, V> {
+@Service(value = { ISPNCacheConfiguration.class, CacheConfiguration.class})
+public class ISPNTransactionalCacheConfigurationComponent<K, V> extends ISPNCacheConfigurationComponent<K, V> {
 
     @Reference
     private TransactionManager transactionManager;
     
     @Reference
     private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+    
+    @Override
+    public void applyValuesOnBuilder(ConfigurationBuilder builder) {
+        super.applyValuesOnBuilder(builder);
+    }
 }
