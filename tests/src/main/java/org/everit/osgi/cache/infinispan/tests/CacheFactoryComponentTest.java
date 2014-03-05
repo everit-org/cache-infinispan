@@ -16,7 +16,7 @@
  */
 package org.everit.osgi.cache.infinispan.tests;
 
-import javax.cache.Cache;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
@@ -25,6 +25,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
+import org.everit.osgi.cache.api.CacheHolder;
+import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.everit.osgi.dev.testrunner.TestDuringDevelopment;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,26 +43,27 @@ import org.junit.Test;
 @TestDuringDevelopment
 public class CacheFactoryComponentTest
 {
-    @Reference(bind = "setCacheConfiguration")
-    private CacheConfiguration<String, String> cacheConfiguration;
+    @Reference(target = "(" + CacheProps.CACHE_NAME + "=simpleCache)")
+    private CacheConfiguration<String, String> nonClusteredNonTransactionalCacheConfiguration;
 
-    @Reference(bind = "setCacheFactory")
+    @Reference
     private CacheFactory cacheFactory;
 
-    public void setCacheConfiguration(CacheConfiguration<String, String> cacheConfiguration) {
-        this.cacheConfiguration = cacheConfiguration;
+    public void setCacheConfiguration(final CacheConfiguration<String, String> cacheConfiguration) {
+        this.nonClusteredNonTransactionalCacheConfiguration = cacheConfiguration;
     }
 
-    public void setCacheFactory(CacheFactory cacheFactory) {
+    public void setCacheFactory(final CacheFactory cacheFactory) {
         this.cacheFactory = cacheFactory;
     }
 
     @Test
     public void simpleTest() {
-        Cache<String, String> cache = cacheFactory.createCache(cacheConfiguration, this.getClass().getClassLoader());
+        CacheHolder<String, String> cacheHolder = cacheFactory.createCache(
+                nonClusteredNonTransactionalCacheConfiguration, this.getClass().getClassLoader());
+        ConcurrentMap<String, String> cache = cacheHolder.getCache();
         cache.put("1", "1");
         Assert.assertEquals("1", cache.get("1"));
-
-        cache.close();
+        cacheHolder.close();
     }
 }

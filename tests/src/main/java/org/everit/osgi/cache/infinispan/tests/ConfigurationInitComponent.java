@@ -46,10 +46,15 @@ public class ConfigurationInitComponent {
             getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME,
                     cacheFactoryProps);
 
-            Dictionary<String, Object> cacheConfigProps = new Hashtable<String, Object>();
-            cacheConfigProps.put(CacheProps.CACHE_NAME, "nonClusteredNonTransactionalCache");
+            Dictionary<String, Object> simpleCacheConfigProps = new Hashtable<String, Object>();
+            simpleCacheConfigProps.put(CacheProps.CACHE_NAME, "simpleCache");
             getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME,
-                    cacheConfigProps);
+                    simpleCacheConfigProps);
+
+            Dictionary<String, Object> transactionalCacheConfigProps = new Hashtable<String, Object>();
+            transactionalCacheConfigProps.put(CacheProps.CACHE_NAME, "transactionalCache");
+            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME,
+                    transactionalCacheConfigProps);
 
         } catch (IOException e) {
             throw new RuntimeException(e);

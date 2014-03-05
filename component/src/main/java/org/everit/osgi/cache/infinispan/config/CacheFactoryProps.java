@@ -21,8 +21,8 @@ import org.infinispan.configuration.cache.CacheMode;
 public final class CacheFactoryProps {
 
     public static final String CACHE_FACTORY_COMPONENT_NAME =
-            "org.everit.osgi.cache.infinispan.ISPNCacheFactory";
-    
+            "org.everit.osgi.cache.infinispan.CacheFactory";
+
     /**
      * Whether or not this cache factory accepts clustered cache configurations. In case this property is false, cache
      * configurations with {@link CacheMode#LOCAL} are accepted only. In case of clustered caches, both local and

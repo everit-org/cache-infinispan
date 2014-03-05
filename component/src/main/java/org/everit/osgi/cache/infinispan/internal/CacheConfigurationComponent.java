@@ -178,20 +178,19 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheProps.TRANSACTION__TRANSACTION_MANAGER__TARGET),
         @Property(name = CacheProps.TRANSACTION__TRANSACTION_SYNCHRONIZATION_REGISTRY__TARGET),
 })
-public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfiguration<K, V> {
+public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration<K, V> {
 
     private ServiceRegistration<?> serviceRegistration = null;
 
     private Configuration configuration = null;
-    
+
     private String cacheName = null;
-    
+
     @Reference
     private TransactionManager transactionManager;
-    
+
     @Reference
     private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-    
 
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentConfiguration) {
@@ -201,10 +200,10 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         ConfigurationBuilder builder = new ConfigurationBuilder();
         ReflectiveConfigurationBuilderHelper h = new ReflectiveConfigurationBuilderHelper(componentConfiguration,
                 builder);
-        
+
         ReflectiveComponentConfigurationHelper cch = h.getComponentConfigHelper();
 
-        String cacheName = cch.getPropValue(CacheProps.CACHE_NAME, String.class, true);
+        cacheName = cch.getPropValue(CacheProps.CACHE_NAME, String.class, true);
         serviceProperties.put(CacheProps.CACHE_NAME, cacheName);
 
         h.applyConfigOnBuilderValue(CacheProps.EVICTION__MAX_ENTRIES, int.class, false);
@@ -216,7 +215,7 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.applyConfigOnBuilderValue(CacheProps.EXPIRATION__WAKE_UP_INTERVAL, long.class, false);
         h.applyConfigOnBuilderValue(CacheProps.INVOCATION_BATCHING__ENABLE, boolean.class, false);
         CacheMode cacheMode = h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__CACHE_MODE, CacheMode.class, false);
-        if (cacheMode != null && !CacheMode.LOCAL.equals(cacheMode)) {
+        if ((cacheMode != null) && !CacheMode.LOCAL.equals(cacheMode)) {
             h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, boolean.class, false);
             h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__USE_REPL_QUEUE, boolean.class, false);
             h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, long.class, false);
@@ -226,7 +225,7 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
             h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__HASH__CAPACITY_FACTOR, Float.class, false);
             Boolean l1Enabled = h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__ENABLED, Boolean.class, false);
 
-            if (l1Enabled != null && l1Enabled) {
+            if ((l1Enabled != null) && l1Enabled) {
                 h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, int.class, false);
                 h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__LIFESPAN, long.class, false);
                 h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__ON_REHASH, boolean.class, false);
@@ -247,13 +246,14 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.applyConfigOnBuilderValue(CacheProps.LOCKING_WRITE_SKEW_CHECK, boolean.class, false);
         Boolean deadlockDetectionEnabled = h.applyConfigOnBuilderValue(CacheProps.DEADLOCK_DETECTION__ENABLED,
                 boolean.class, false);
-        if (deadlockDetectionEnabled != null && deadlockDetectionEnabled) {
+        if ((deadlockDetectionEnabled != null) && deadlockDetectionEnabled) {
             h.applyConfigOnBuilderValue(CacheProps.DEADLOCKDETECTION__SPIN_DURATION, long.class, false);
         }
 
         String transactionModeString = cch.getPropValue(CacheProps.TRANSACTION__TRANSACTION_MODE, String.class, false);
-        if (transactionModeString != null && !CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT.equals(transactionModeString)) {
-            h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__TRANSACTION_MODE, TransactionMode.class, false);    
+        if ((transactionModeString != null)
+                && !CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT.equals(transactionModeString)) {
+            h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__TRANSACTION_MODE, TransactionMode.class, false);
         }
         h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__AUTO_COMMIT, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT, long.class, false);
@@ -267,32 +267,31 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL, long.class, false);
         h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__COMPLETED_TX_TIMEOUT, long.class, false);
         h.applyConfigOnBuilderValue(CacheProps.TRANSACTION__TRANSACTION_PROTOCOL, TransactionProtocol.class, false);
-        
+
         builder.transaction().transactionManagerLookup(new TransactionManagerLookup() {
-            
+
             @Override
             public TransactionManager getTransactionManager() throws Exception {
                 return transactionManager;
             }
         });
-        
+
         builder.transaction().transactionSynchronizationRegistryLookup(new TransactionSynchronizationRegistryLookup() {
-            
+
             @Override
             public TransactionSynchronizationRegistry getTransactionSynchronizationRegistry() throws Exception {
                 return transactionSynchronizationRegistry;
             }
         });
-        
-        
+
         Boolean versioning = h.applyConfigOnBuilderValue(CacheProps.VERSIONING__ENABLED, boolean.class, false);
-        if (versioning != null && versioning) {
+        if ((versioning != null) && versioning) {
             h.applyConfigOnBuilderValue(CacheProps.VERSIONING__SCHEME, VersioningScheme.class, false);
         }
         h.applyConfigOnBuilderValue(CacheProps.JMX_STATISTICS__ENABLED, boolean.class, false);
 
         configuration = builder.build(true);
-        
+
         fillServiceProperties(serviceProperties);
 
         serviceRegistration = context.registerService(
@@ -300,10 +299,35 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
                 new Hashtable<String, Object>(serviceProperties));
     }
 
-    private void fillServiceProperties(Map<String, Object> serviceProperties) {
+    private Boolean applyNullableBoolean(final String key, final ReflectiveConfigurationBuilderHelper helper) {
+        ReflectiveComponentConfigurationHelper configHelper = helper.getComponentConfigHelper();
+        String propValue = configHelper.getPropValue(key, String.class, false);
+        if ((propValue == null) || CacheProps.COMMON__BOOLEAN_OPT_DEFAULT.equals(propValue)) {
+            return null;
+        }
+        if (CacheProps.COMMON__BOOLEAN_OPT_TRUE.equals(propValue)) {
+            helper.applyValue(key, true, boolean.class);
+            return true;
+        } else if (CacheProps.COMMON__BOOLEAN_OPT_FALSE.equals(propValue)) {
+            helper.applyValue(key, false, boolean.class);
+            return false;
+        } else {
+            throw new ComponentException("The value '" + propValue + "' is not allowed for configuration property "
+                    + key);
+        }
+    }
+
+    @Deactivate
+    public void deactivate() {
+        if (serviceRegistration != null) {
+            serviceRegistration.unregister();
+        }
+    }
+
+    private void fillServiceProperties(final Map<String, Object> serviceProperties) {
         ReflectiveConfigToServicePropsHelper h = new ReflectiveConfigToServicePropsHelper(configuration,
                 serviceProperties);
-        
+
         h.transferProperty(CacheProps.EVICTION__MAX_ENTRIES);
         h.transferProperty(CacheProps.EVICTION__STRATEGY);
         h.transferProperty(CacheProps.EVICTION__THREAD_POLICY);
@@ -337,7 +361,7 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.transferProperty(CacheProps.LOCKING_WRITE_SKEW_CHECK);
         h.transferProperty(CacheProps.DEADLOCK_DETECTION__ENABLED);
         h.transferProperty(CacheProps.DEADLOCKDETECTION__SPIN_DURATION);
-        
+
         h.transferProperty(CacheProps.TRANSACTION__TRANSACTION_MODE);
         h.transferProperty(CacheProps.TRANSACTION__AUTO_COMMIT);
         h.transferProperty(CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT);
@@ -351,28 +375,15 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         h.transferProperty(CacheProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL);
         h.transferProperty(CacheProps.TRANSACTION__COMPLETED_TX_TIMEOUT);
         h.transferProperty(CacheProps.TRANSACTION__TRANSACTION_PROTOCOL);
-        
+
         h.transferProperty(CacheProps.VERSIONING__ENABLED);
         h.transferProperty(CacheProps.VERSIONING__SCHEME);
         h.transferProperty(CacheProps.JMX_STATISTICS__ENABLED);
     }
 
-    private Boolean applyNullableBoolean(String key, ReflectiveConfigurationBuilderHelper helper) {
-        ReflectiveComponentConfigurationHelper configHelper = helper.getComponentConfigHelper();
-        String propValue = configHelper.getPropValue(key, String.class, false);
-        if (propValue == null || CacheProps.COMMON__BOOLEAN_OPT_DEFAULT.equals(propValue)) {
-            return null;
-        }
-        if (CacheProps.COMMON__BOOLEAN_OPT_TRUE.equals(propValue)) {
-            helper.applyValue(key, true, boolean.class);
-            return true;
-        } else if (CacheProps.COMMON__BOOLEAN_OPT_FALSE.equals(propValue)) {
-            helper.applyValue(key, false, boolean.class);
-            return false;
-        } else {
-            throw new ComponentException("The value '" + propValue + "' is not allowed for configuration property "
-                    + key);
-        }
+    @Override
+    public String getCacheName() {
+        return cacheName;
     }
 
     @Override
@@ -380,16 +391,12 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         return configuration;
     }
 
-    @Deactivate
-    public void deactivate() {
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
-        }
-    }
-    
-    @Override
-    public String getCacheName() {
-        return cacheName;
+    public void setTransactionManager(final TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
+    public void setTransactionSynchronizationRegistry(
+            final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+        this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
+    }
 }

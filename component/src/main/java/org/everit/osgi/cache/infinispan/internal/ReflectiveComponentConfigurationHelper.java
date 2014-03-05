@@ -23,15 +23,37 @@ import org.osgi.service.component.ComponentException;
 public class ReflectiveComponentConfigurationHelper {
 
     private final Map<String, ?> configuration;
-    
-    public ReflectiveComponentConfigurationHelper(Map<String, ?> configuration) {
+
+    public ReflectiveComponentConfigurationHelper(final Map<String, ?> configuration) {
         this.configuration = configuration;
+    }
+
+    public Class<?> classify(final Class<?> potentiallyTypeOfPrimitive) {
+        if (potentiallyTypeOfPrimitive.isAssignableFrom(boolean.class)) {
+            return Boolean.class;
+        }
+        if (potentiallyTypeOfPrimitive.isAssignableFrom(int.class)) {
+            return Integer.class;
+        }
+        if (potentiallyTypeOfPrimitive.isAssignableFrom(long.class)) {
+            return Long.class;
+        }
+        return potentiallyTypeOfPrimitive;
+    }
+
+    public Object getObjectValue(final String key, final boolean mandatory) {
+        Object value = configuration.get(key);
+        if ((value == null) && mandatory) {
+            throw new ComponentException("The value of the mandatory configuration property '" + key
+                    + "' is not defined.");
+        }
+        return value;
     }
 
     public <V> V getPropValue(final String key, final Class<V> valueType,
             final boolean mandatory) {
         Object value = getObjectValue(key, mandatory);
-        if (value == null || (String.class.isInstance(value) && ((String) value).trim().equals(""))) {
+        if ((value == null) || (String.class.isInstance(value) && ((String) value).trim().equals(""))) {
             System.out.println(" VALUEEEEEEEEE NULL " + key);
             if (mandatory) {
                 System.out.println("AND MANDATORY");
@@ -45,27 +67,5 @@ public class ReflectiveComponentConfigurationHelper {
                     + ". Current type is " + value.getClass().toString());
         }
         return (V) value;
-    }
-    
-    public Object getObjectValue(final String key, final boolean mandatory) {
-        Object value = configuration.get(key);
-        if (value == null && mandatory) {
-            throw new ComponentException("The value of the mandatory configuration property '" + key
-                    + "' is not defined.");
-        }
-        return value;
-    }
-    
-    public Class<?> classify(Class<?> potentiallyTypeOfPrimitive) {
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(boolean.class)) {
-            return Boolean.class;
-        }
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(int.class)) {
-            return Integer.class;
-        }
-        if (potentiallyTypeOfPrimitive.isAssignableFrom(long.class)) {
-            return Long.class;
-        }
-        return potentiallyTypeOfPrimitive;
     }
 }

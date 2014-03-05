@@ -30,7 +30,7 @@ import org.infinispan.configuration.cache.RecoveryConfiguration;
 public final class CacheProps {
 
     public static final String CACHE_CONFIGURATION_COMPONENT_NAME =
-            "org.everit.osgi.cache.infinispan.ISPNCacheConfiguration";
+            "org.everit.osgi.cache.infinispan.CacheConfiguration";
 
     /**
      * Name of the cache. Must be unique.
@@ -332,13 +332,13 @@ public final class CacheProps {
      * Whether the cache is transactional or not.
      */
     public static final String TRANSACTION__TRANSACTION_MODE = "transaction.transactionMode";
-    
+
     public static final String TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT = "DEFAULT";
-    
+
     public static final String TRANSACTION__TRANSACTION_MODE_OPT_TRANSACTIONAL = "TRANSACTIONAL";
-    
+
     public static final String TRANSACTION__TRANSACTION_MODE_OPT_NON_TRANSACTIONAL = "NON_TRANSACTIONAL";
-    
+
     /**
      * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
      * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back

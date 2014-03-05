@@ -21,7 +21,7 @@ import org.infinispan.configuration.cache.Configuration;
 
 public interface ISPNCacheConfiguration<K, V> extends CacheConfiguration<K, V> {
 
-    Configuration getConfiguration();
-    
     String getCacheName();
+
+    Configuration getConfiguration();
 }

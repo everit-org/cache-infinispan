@@ -28,13 +28,9 @@ public class ReflectiveConfigurationBuilderHelper {
 
     private final ReflectiveComponentConfigurationHelper componentConfigHelper;
 
-    public ReflectiveConfigurationBuilderHelper(Map<String, ?> configuration, Object builder) {
-        this.componentConfigHelper = new ReflectiveComponentConfigurationHelper(configuration);
+    public ReflectiveConfigurationBuilderHelper(final Map<String, ?> configuration, final Object builder) {
+        componentConfigHelper = new ReflectiveComponentConfigurationHelper(configuration);
         this.builder = builder;
-    }
-
-    public ReflectiveComponentConfigurationHelper getComponentConfigHelper() {
-        return componentConfigHelper;
     }
 
     /**
@@ -48,7 +44,7 @@ public class ReflectiveConfigurationBuilderHelper {
      *            Whether the configuration entry is mandatory or not.
      */
     public <T> T applyConfigOnBuilderValue(final String key,
-            Class<T> valueType, boolean mandatory) {
+            final Class<T> valueType, final boolean mandatory) {
         Object value = null;
         if (Enum.class.isAssignableFrom(valueType)) {
             String stringValue = componentConfigHelper.getPropValue(key, String.class, mandatory);
@@ -75,12 +71,12 @@ public class ReflectiveConfigurationBuilderHelper {
         return propValue;
     }
 
-    public void applyValue(String key, Object value, Class<?> valueType) {
+    public void applyValue(final String key, final Object value, final Class<?> valueType) {
         String[] keyParts = key.split("\\.");
         Object currentBuilderObject = builder;
         try {
             for (int i = 0, n = keyParts.length; i < n; i++) {
-                if (i < n - 1) {
+                if (i < (n - 1)) {
                     Method method = currentBuilderObject.getClass().getMethod(keyParts[i]);
                     currentBuilderObject = method.invoke(currentBuilderObject);
 
@@ -100,5 +96,9 @@ public class ReflectiveConfigurationBuilderHelper {
         } catch (InvocationTargetException e) {
             throw new ComponentException("Could not set configuration with key " + key, e);
         }
+    }
+
+    public ReflectiveComponentConfigurationHelper getComponentConfigHelper() {
+        return componentConfigHelper;
     }
 }

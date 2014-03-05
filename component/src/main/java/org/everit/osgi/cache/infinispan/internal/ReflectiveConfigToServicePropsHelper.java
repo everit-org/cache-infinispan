@@ -26,21 +26,22 @@ import org.osgi.service.component.ComponentException;
 public class ReflectiveConfigToServicePropsHelper {
 
     private final Map<String, Object> serviceProperties;
-    
+
     private final Configuration configuration;
 
-    public ReflectiveConfigToServicePropsHelper(Configuration configuration, Map<String, Object> serviceProperties) {
+    public ReflectiveConfigToServicePropsHelper(final Configuration configuration,
+            final Map<String, Object> serviceProperties) {
         this.configuration = configuration;
         this.serviceProperties = serviceProperties;
     }
-    
+
     public <V> V transferProperty(final String key) {
         String[] keyParts = key.split("\\.");
         Object currentConfigObject = configuration;
         V result = null;
         try {
             for (int i = 0, n = keyParts.length; i < n; i++) {
-                if (i < n - 1) {
+                if (i < (n - 1)) {
                     Method method = currentConfigObject.getClass().getMethod(keyParts[i]);
                     currentConfigObject = method.invoke(currentConfigObject);
                     if (currentConfigObject == null) {
@@ -68,6 +69,6 @@ public class ReflectiveConfigToServicePropsHelper {
         } catch (InvocationTargetException e) {
             throw new ComponentException("Could not set configuration with key " + key, e);
         }
-    
+
     }
 }

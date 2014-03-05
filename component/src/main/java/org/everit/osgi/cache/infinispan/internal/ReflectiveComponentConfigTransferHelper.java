@@ -26,9 +26,14 @@ public class ReflectiveComponentConfigTransferHelper {
 
     private final ReflectiveComponentConfigurationHelper configHelper;
 
-    public ReflectiveComponentConfigTransferHelper(Map<String, Object> componentConfig, Map<String, Object> targetConfig) {
-        this.configHelper = new ReflectiveComponentConfigurationHelper(componentConfig);
+    public ReflectiveComponentConfigTransferHelper(final Map<String, Object> componentConfig,
+            final Map<String, Object> targetConfig) {
+        configHelper = new ReflectiveComponentConfigurationHelper(componentConfig);
         this.targetConfig = targetConfig;
+    }
+
+    public ReflectiveComponentConfigurationHelper getConfigHelper() {
+        return configHelper;
     }
 
     /**
@@ -46,7 +51,7 @@ public class ReflectiveComponentConfigTransferHelper {
      * @return The value of the entry or null if not mandatory and the entry did not exist with the specified key in the
      *         component configuration.
      */
-    public <V> V transferEntry(String key, Class<V> valueType, boolean mandatory) {
+    public <V> V transferEntry(final String key, final Class<V> valueType, final boolean mandatory) {
         Object value = null;
         if (Enum.class.isAssignableFrom(valueType)) {
             String stringValue = configHelper.getPropValue(key, String.class, mandatory);
@@ -63,15 +68,11 @@ public class ReflectiveComponentConfigTransferHelper {
             value = configHelper.getPropValue(key, valueType, mandatory);
         }
 
-        if (mandatory || value != null) {
+        if (mandatory || (value != null)) {
             targetConfig.put(key, value);
         }
         V typedValue = (V) value;
         return typedValue;
-    }
-
-    public ReflectiveComponentConfigurationHelper getConfigHelper() {
-        return configHelper;
     }
 
 }

@@ -21,8 +21,8 @@ import java.lang.reflect.Method;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
-
-import javax.cache.Cache;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -32,10 +32,11 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.api.CacheFactory;
+import org.everit.osgi.cache.api.CacheHolder;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
 import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
-import org.everit.osgi.cache.infinispan.internal.jcache.JCache;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -70,9 +71,11 @@ import org.osgi.service.log.LogService;
         @Property(name = CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME),
         @Property(name = "logService.target")
 })
-public class ISPNCacheFactoryComponent implements CacheFactory {
+public class CacheFactoryComponent implements CacheFactory {
 
     private Map<String, ?> componentConfiguration;
+
+    private ConcurrentMap<String, Boolean> activeCacheNames = new ConcurrentHashMap<String, Boolean>();
 
     @Reference
     private LogService logService;
@@ -87,7 +90,7 @@ public class ISPNCacheFactoryComponent implements CacheFactory {
 
     @Activate
     public void activate(final BundleContext context, final Map<String, ?> config) {
-        this.componentConfiguration = config;
+        componentConfiguration = config;
         BundleWiring bundleWiring = context.getBundle().adapt(BundleWiring.class);
         ClassLoader componentClassLoader = bundleWiring.getClassLoader();
 
@@ -193,13 +196,68 @@ public class ISPNCacheFactoryComponent implements CacheFactory {
         context.registerService(CacheFactory.class, this, serviceProperties);
     }
 
-    private void transferValueToServiceProperties(String key, Object configuration,
-            Dictionary<String, ? super Object> serviceProperties) {
+    @Override
+    public <K, V> CacheHolder<K, V> createCache(final CacheConfiguration<K, V> cacheConfiguration,
+            final ClassLoader classLoader) {
+
+        if (!(cacheConfiguration instanceof ISPNCacheConfiguration)) {
+            throw new ComponentException("Only configurations with type " + ISPNCacheConfiguration.class.getName()
+                    + " are accepted: " + cacheConfiguration.getClass().getName());
+        }
+        ISPNCacheConfiguration<K, V> ispnCacheConfiguration = (ISPNCacheConfiguration<K, V>) cacheConfiguration;
+
+        Configuration configuration = ispnCacheConfiguration.getConfiguration();
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.read(configuration);
+        if (classLoader != null) {
+            cb.classLoader(classLoader);
+        }
+
+        String cacheName = ispnCacheConfiguration.getCacheName();
+        Boolean cacheAlreadyUsed = activeCacheNames.put(cacheName, Boolean.TRUE);
+        if (cacheAlreadyUsed != null) {
+            throw new ComponentException("Cache with cache name '" + cacheName + "' is already used");
+        }
+        try {
+            logService.log(LogService.LOG_DEBUG, "Creating cache '" + cacheName + "'");
+            manager.defineConfiguration(cacheName, cb.build(true));
+            Cache<K, V> cache = manager.getCache(cacheName);
+            AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+            advancedCache.with(classLoader);
+            advancedCache.start();
+            return new CacheHolderImpl<K, V>(advancedCache, this);
+        } catch (RuntimeException e) {
+            activeCacheNames.remove(cacheName);
+            logService.log(LogService.LOG_DEBUG, "Cache '" + cacheName + "' is removed due to exception");
+            throw e;
+        }
+    }
+
+    void cacheClosed(String cacheName) {
+        logService.log(LogService.LOG_DEBUG, "Cache '" + cacheName + "' is removed");
+        activeCacheNames.remove(cacheName);
+    }
+
+    /**
+     * Method responsible for closing the CacheManager.
+     */
+    @Deactivate
+    public void deactivate() {
+        if (serviceRegistration != null) {
+            serviceRegistration.unregister();
+        }
+        if (manager != null) {
+            manager.stop();
+        }
+    }
+
+    private void transferValueToServiceProperties(final String key, final Object configuration,
+            final Dictionary<String, ? super Object> serviceProperties) {
         String[] keyParts = key.split("\\.");
         Object currentConfigObject = configuration;
         try {
             for (int i = 0, n = keyParts.length; i < n; i++) {
-                if (i < n - 1) {
+                if (i < (n - 1)) {
                     Method method = currentConfigObject.getClass().getMethod(keyParts[i]);
                     currentConfigObject = method.invoke(currentConfigObject);
                 } else {
@@ -225,43 +283,6 @@ public class ISPNCacheFactoryComponent implements CacheFactory {
         } catch (InvocationTargetException e) {
             throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
                     + servicePID, e);
-        }
-    }
-
-    @Override
-    public <K, V> Cache<K, V> createCache(final CacheConfiguration<K, V> cacheConfiguration,
-            final ClassLoader classLoader) {
-
-        if (!(cacheConfiguration instanceof ISPNCacheConfiguration)) {
-            throw new ComponentException("Only configurations with type " + ISPNCacheConfiguration.class.getName()
-                    + " are accepted: " + cacheConfiguration.getClass().getName());
-        }
-        ISPNCacheConfiguration<K, V> ispnCacheConfiguration = (ISPNCacheConfiguration<K, V>) cacheConfiguration;
-        Configuration configuration = ispnCacheConfiguration.getConfiguration();
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.read(configuration);
-        if (classLoader != null) {
-            cb.classLoader(classLoader);
-        }
-        String cacheName = ispnCacheConfiguration.getCacheName();
-        manager.defineConfiguration(cacheName, cb.build(true));
-        org.infinispan.Cache<K, V> cache = manager.getCache(cacheName);
-        AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
-        advancedCache.with(classLoader);
-        JCache<K, V> jCache = new JCache<K, V>(advancedCache, configuration);
-        return null;
-    }
-
-    /**
-     * Method responsible for closing the CacheManager.
-     */
-    @Deactivate
-    public void deactivate() {
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
-        }
-        if (manager != null) {
-            manager.stop();
         }
     }
 }
