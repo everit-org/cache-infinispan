@@ -31,16 +31,18 @@ import org.everit.osgi.cache.api.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentException;
 
-@Component(name = "org.everit.osgi.cache.infinispan.ISPNCacheConfiguration", configurationFactory = true,
+@Component(name = CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME, configurationFactory = true,
         immediate = true, policy = ConfigurationPolicy.REQUIRE, metatype = true)
 @Properties({
         @Property(name = CacheProps.CACHE_NAME),
@@ -64,7 +66,7 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheProps.EXPIRATION__REAPER_ENABLED, boolValue = true),
         @Property(name = CacheProps.EXPIRATION__WAKE_UP_INTERVAL, longValue = 60000),
         // TODO support persistence stores @Property(name = CacheProps.PERSISTENCE__PASSIVATION, boolValue = false),
-        @Property(name = CacheProps.INVOCATION_BATCHING__ENABLED, boolValue = false),
+        @Property(name = CacheProps.INVOCATION_BATCHING__ENABLE, boolValue = false),
         @Property(name = CacheProps.CLUSTERING__CACHE_MODE,
                 options = { @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
                         value = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL),
@@ -122,6 +124,39 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheProps.LOCKING_WRITE_SKEW_CHECK, boolValue = false),
         @Property(name = CacheProps.DEADLOCK_DETECTION__ENABLED, boolValue = false),
         @Property(name = CacheProps.DEADLOCKDETECTION__SPIN_DURATION, longValue = 100),
+        @Property(name = CacheProps.TRANSACTION__TRANSACTION_MODE,
+                value = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT, options = { @PropertyOption(
+                        name = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT,
+                        value = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT),
+                        @PropertyOption(
+                                name = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_NON_TRANSACTIONAL,
+                                value = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_NON_TRANSACTIONAL),
+                        @PropertyOption(
+                                name = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_TRANSACTIONAL,
+                                value = CacheProps.TRANSACTION__TRANSACTION_MODE_OPT_TRANSACTIONAL) }),
+        @Property(name = CacheProps.TRANSACTION__AUTO_COMMIT, boolValue = true),
+        @Property(name = CacheProps.TRANSACTION__CACHE_STOP_TIMEOUT, longValue = 30000),
+        @Property(name = CacheProps.TRANSACTION__LOCKING_MODE,
+                value = CacheProps.TRANSACTION__LOCKING_MODE_OPT_OPTIMISTIC, options = { @PropertyOption(
+                        name = CacheProps.TRANSACTION__LOCKING_MODE_OPT_OPTIMISTIC,
+                        value = CacheProps.TRANSACTION__LOCKING_MODE_OPT_OPTIMISTIC), @PropertyOption(
+                        name = CacheProps.TRANSACTION__LOCKING_MODE_OPT_PESSIMISTIC,
+                        value = CacheProps.TRANSACTION__LOCKING_MODE_OPT_PESSIMISTIC) }),
+        @Property(name = CacheProps.TRANSACTION__SYNC_COMMIT_PHASE, boolValue = true),
+        @Property(name = CacheProps.TRANSACTION__SYNC_ROLLBACK_PHASE, boolValue = false),
+        @Property(name = CacheProps.TRANSACTION__USE_SYNCHRONIZATION, boolValue = true),
+        @Property(name = CacheProps.TRANSACTION__RECOVERY__ENABLED, boolValue = true),
+        // TODO be careful as getting a the recovery config builder automatically enables
+        @Property(name = CacheProps.TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME),
+        @Property(name = CacheProps.TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS, boolValue = false),
+        @Property(name = CacheProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL, longValue = 1000),
+        @Property(name = CacheProps.TRANSACTION__COMPLETED_TX_TIMEOUT, longValue = 15000),
+        @Property(name = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL,
+                value = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT, options = { @PropertyOption(
+                        name = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT,
+                        value = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT), @PropertyOption(
+                        name = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER,
+                        value = CacheProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER) }),
         @Property(name = CacheProps.VERSIONING__ENABLED, boolValue = false),
         @Property(name = CacheProps.VERSIONING__SCHEME, value = CacheProps.VERSIONING__SCHEME_OPT_NONE,
                 options = { @PropertyOption(name = CacheProps.VERSIONING__SCHEME_OPT_NONE,
@@ -130,86 +165,145 @@ import org.osgi.service.component.ComponentException;
                                 value = CacheProps.VERSIONING__SCHEME_OPT_SIMPLE) }),
         // TODO support sites configuration
         // TODO support compatibility mode configuration
-        @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false) })
+        @Property(name = CacheProps.JMX_STATISTICS__ENABLED, boolValue = false),
+        @Property(name = CacheProps.TRANSACTION__TRANSACTION_MANAGER__TARGET),
+        @Property(name = CacheProps.TRANSACTION__TRANSACTION_SYNCHRONIZATION_REGISTRY__TARGET),
+})
 public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfiguration<K, V> {
-
-    private Map<String, Object> configuration = new HashMap<String, Object>();
 
     private ServiceRegistration<?> serviceRegistration = null;
 
+    private Configuration configuration = null;
+    
+    private String cacheName = null;
+
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentConfiguration) {
-        System.out.println("ACTIVATE CALLLEDDD");
-        ReflectiveComponentConfigTransferHelper transferHelper = new ReflectiveComponentConfigTransferHelper(
-                componentConfiguration, configuration);
+        Map<String, Object> serviceProperties = new HashMap<String, Object>();
+        serviceProperties.put(Constants.SERVICE_PID, componentConfiguration.get(Constants.SERVICE_PID));
 
-        System.out.println("CHECKING CACHE NAME");
-        transferHelper.transferEntry(CacheProps.CACHE_NAME, String.class, true);
-        transferHelper.transferEntry(CacheProps.EVICTION__MAX_ENTRIES, Integer.class, false);
-        transferHelper.transferEntry(CacheProps.EVICTION__STRATEGY, EvictionStrategy.class, false);
-        transferHelper.transferEntry(CacheProps.EVICTION__THREAD_POLICY, EvictionThreadPolicy.class, false);
-        transferHelper.transferEntry(CacheProps.EXPIRATION__LIFESPAN, Long.class, false);
-        transferHelper.transferEntry(CacheProps.EXPIRATION__MAX_IDLE, Long.class, false);
-        transferHelper.transferEntry(CacheProps.EXPIRATION__REAPER_ENABLED, Boolean.class, false);
-        transferHelper.transferEntry(CacheProps.EXPIRATION__WAKE_UP_INTERVAL, Long.class, false);
-        transferHelper.transferEntry(CacheProps.INVOCATION_BATCHING__ENABLED, Boolean.class, false);
-        CacheMode cacheMode = transferHelper.transferEntry(CacheProps.CLUSTERING__CACHE_MODE, CacheMode.class, false);
+        ConfigurationBuilder builder = new ConfigurationBuilder();
+        ReflectiveConfigurationBuilderHelper h = new ReflectiveConfigurationBuilderHelper(componentConfiguration,
+                builder);
+        
+        ReflectiveComponentConfigurationHelper cch = h.getComponentConfigHelper();
+
+        String cacheName = cch.getPropValue(CacheProps.CACHE_NAME, String.class, true);
+        serviceProperties.put(CacheProps.CACHE_NAME, cacheName);
+
+        h.applyConfigOnBuilderValue(CacheProps.EVICTION__MAX_ENTRIES, int.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EVICTION__STRATEGY, EvictionStrategy.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EVICTION__THREAD_POLICY, EvictionThreadPolicy.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EXPIRATION__LIFESPAN, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EXPIRATION__MAX_IDLE, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EXPIRATION__REAPER_ENABLED, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.EXPIRATION__WAKE_UP_INTERVAL, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.INVOCATION_BATCHING__ENABLE, boolean.class, false);
+        CacheMode cacheMode = h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__CACHE_MODE, CacheMode.class, false);
         if (cacheMode != null && !CacheMode.LOCAL.equals(cacheMode)) {
-            transferHelper.transferEntry(CacheProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, Boolean.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__ASYNC__USE_REPL_QUEUE, Boolean.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, Long.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS, Integer.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__HASH__NUM_OWNERS, Integer.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__HASH__NUM_SEGMENTS, Integer.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__HASH__CAPACITY_FACTOR, Float.class, false);
-            Boolean l1Enabled = transferHelper.transferEntry(CacheProps.CLUSTERING__L1__ENABLED, Boolean.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, boolean.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__USE_REPL_QUEUE, boolean.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, long.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS, int.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__HASH__NUM_OWNERS, int.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__HASH__NUM_SEGMENTS, int.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__HASH__CAPACITY_FACTOR, Float.class, false);
+            Boolean l1Enabled = h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__ENABLED, Boolean.class, false);
 
             if (l1Enabled != null && l1Enabled) {
-                transferHelper.transferEntry(CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, Integer.class, false);
-                transferHelper.transferEntry(CacheProps.CLUSTERING__L1__LIFESPAN, Long.class, false);
-                transferHelper.transferEntry(CacheProps.CLUSTERING__L1__ON_REHASH, Boolean.class, false);
-                transferHelper.transferEntry(CacheProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, Long.class, false);
+                h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, int.class, false);
+                h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__LIFESPAN, long.class, false);
+                h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__ON_REHASH, boolean.class, false);
+                h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, long.class, false);
             }
 
-            ReflectiveComponentConfigurationHelper configHelper = transferHelper.getConfigHelper();
-            transferNullableBoolean(CacheProps.CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE, configHelper);
-            transferNullableBoolean(CacheProps.CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER, configHelper);
+            applyNullableBoolean(CacheProps.CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE, h);
+            applyNullableBoolean(CacheProps.CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER, h);
 
-            transferHelper.transferEntry(CacheProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE, Integer.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__STATE_TRANSFER__TIMEOUT, Long.class, false);
-            transferHelper.transferEntry(CacheProps.CLUSTERING__SYNC__REPL_TIMEOUT, Long.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE, int.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__STATE_TRANSFER__TIMEOUT, long.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.CLUSTERING__SYNC__REPL_TIMEOUT, long.class, false);
         }
-        transferHelper.transferEntry(CacheProps.LOCKING__CONCURRENCY_LEVEL, Integer.class, false);
-        transferHelper.transferEntry(CacheProps.LOCKING__ISOLATION_LEVEL, IsolationLevel.class, false);
-        transferHelper.transferEntry(CacheProps.LOCKING__LOCK_ACQUISITION_TIMEOUT, Long.class, false);
-        transferHelper.transferEntry(CacheProps.LOCKING__USE_LOCK_STRIPING, Boolean.class, false);
-        transferHelper.transferEntry(CacheProps.LOCKING_WRITE_SKEW_CHECK, Boolean.class, false);
-        Boolean deadlockDetectionEnabled = transferHelper.transferEntry(CacheProps.DEADLOCK_DETECTION__ENABLED,
-                Boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.LOCKING__CONCURRENCY_LEVEL, int.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.LOCKING__ISOLATION_LEVEL, IsolationLevel.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.LOCKING__LOCK_ACQUISITION_TIMEOUT, long.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.LOCKING__USE_LOCK_STRIPING, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.LOCKING_WRITE_SKEW_CHECK, boolean.class, false);
+        Boolean deadlockDetectionEnabled = h.applyConfigOnBuilderValue(CacheProps.DEADLOCK_DETECTION__ENABLED,
+                boolean.class, false);
         if (deadlockDetectionEnabled != null && deadlockDetectionEnabled) {
-            transferHelper.transferEntry(CacheProps.DEADLOCKDETECTION__SPIN_DURATION, Long.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.DEADLOCKDETECTION__SPIN_DURATION, long.class, false);
         }
 
-        Boolean versioning = transferHelper.transferEntry(CacheProps.VERSIONING__ENABLED, Boolean.class, false);
+        Boolean versioning = h.applyConfigOnBuilderValue(CacheProps.VERSIONING__ENABLED, boolean.class, false);
         if (versioning != null && versioning) {
-            transferHelper.transferEntry(CacheProps.VERSIONING__SCHEME, VersioningScheme.class, false);
+            h.applyConfigOnBuilderValue(CacheProps.VERSIONING__SCHEME, VersioningScheme.class, false);
         }
-        transferHelper.transferEntry(CacheProps.JMX_STATISTICS__ENABLED, Boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheProps.JMX_STATISTICS__ENABLED, boolean.class, false);
+
+        configuration = builder.build(true);
+        
+        fillServiceProperties(serviceProperties);
 
         serviceRegistration = context.registerService(
                 new String[] { CacheConfiguration.class.getName(), ISPNCacheConfiguration.class.getName() }, this,
-                new Hashtable<String, Object>(configuration));
+                new Hashtable<String, Object>(serviceProperties));
     }
 
-    private void transferNullableBoolean(String key, ReflectiveComponentConfigurationHelper helper) {
-        String propValue = helper.getPropValue(key, String.class, false);
+    private void fillServiceProperties(Map<String, Object> serviceProperties) {
+        ReflectiveConfigToServicePropsHelper h = new ReflectiveConfigToServicePropsHelper(configuration,
+                serviceProperties);
+        
+        h.transferProperty(CacheProps.EVICTION__MAX_ENTRIES);
+        h.transferProperty(CacheProps.EVICTION__STRATEGY);
+        h.transferProperty(CacheProps.EVICTION__THREAD_POLICY);
+        h.transferProperty(CacheProps.EXPIRATION__LIFESPAN);
+        h.transferProperty(CacheProps.EXPIRATION__MAX_IDLE);
+        h.transferProperty(CacheProps.EXPIRATION__REAPER_ENABLED);
+        h.transferProperty(CacheProps.EXPIRATION__WAKE_UP_INTERVAL);
+        h.transferProperty(CacheProps.INVOCATION_BATCHING__ENABLE + "d");
+        h.transferProperty(CacheProps.CLUSTERING__CACHE_MODE);
+        h.transferProperty(CacheProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING);
+        h.transferProperty(CacheProps.CLUSTERING__ASYNC__USE_REPL_QUEUE);
+        h.transferProperty(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL);
+        h.transferProperty(CacheProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS);
+        h.transferProperty(CacheProps.CLUSTERING__HASH__NUM_OWNERS);
+        h.transferProperty(CacheProps.CLUSTERING__HASH__NUM_SEGMENTS);
+        h.transferProperty(CacheProps.CLUSTERING__HASH__CAPACITY_FACTOR);
+        h.transferProperty(CacheProps.CLUSTERING__L1__ENABLED);
+        h.transferProperty(CacheProps.CLUSTERING__L1__INVALIDATION_TRESHOLD);
+        h.transferProperty(CacheProps.CLUSTERING__L1__LIFESPAN);
+        h.transferProperty(CacheProps.CLUSTERING__L1__ON_REHASH);
+        h.transferProperty(CacheProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY);
+        h.transferProperty(CacheProps.CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE);
+        h.transferProperty(CacheProps.CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER);
+        h.transferProperty(CacheProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE);
+        h.transferProperty(CacheProps.CLUSTERING__STATE_TRANSFER__TIMEOUT);
+        h.transferProperty(CacheProps.CLUSTERING__SYNC__REPL_TIMEOUT);
+        h.transferProperty(CacheProps.LOCKING__CONCURRENCY_LEVEL);
+        h.transferProperty(CacheProps.LOCKING__ISOLATION_LEVEL);
+        h.transferProperty(CacheProps.LOCKING__LOCK_ACQUISITION_TIMEOUT);
+        h.transferProperty(CacheProps.LOCKING__USE_LOCK_STRIPING);
+        h.transferProperty(CacheProps.LOCKING_WRITE_SKEW_CHECK);
+        h.transferProperty(CacheProps.DEADLOCK_DETECTION__ENABLED);
+        h.transferProperty(CacheProps.DEADLOCKDETECTION__SPIN_DURATION);
+        h.transferProperty(CacheProps.VERSIONING__ENABLED);
+        h.transferProperty(CacheProps.VERSIONING__SCHEME);
+        h.transferProperty(CacheProps.JMX_STATISTICS__ENABLED);
+    }
+
+    private Boolean applyNullableBoolean(String key, ReflectiveConfigurationBuilderHelper helper) {
+        ReflectiveComponentConfigurationHelper configHelper = helper.getComponentConfigHelper();
+        String propValue = configHelper.getPropValue(key, String.class, false);
         if (propValue == null || CacheProps.COMMON__BOOLEAN_OPT_DEFAULT.equals(propValue)) {
-            return;
+            return null;
         }
         if (CacheProps.COMMON__BOOLEAN_OPT_TRUE.equals(propValue)) {
-            configuration.put(key, true);
+            helper.applyValue(key, true, boolean.class);
+            return true;
         } else if (CacheProps.COMMON__BOOLEAN_OPT_FALSE.equals(propValue)) {
-            configuration.put(key, false);
+            helper.applyValue(key, false, boolean.class);
+            return false;
         } else {
             throw new ComponentException("The value '" + propValue + "' is not allowed for configuration property "
                     + key);
@@ -217,8 +311,8 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
     }
 
     @Override
-    public void applyValuesOnBuilder(ConfigurationBuilder builder) {
-
+    public Configuration getConfiguration() {
+        return configuration;
     }
 
     @Deactivate
@@ -226,6 +320,11 @@ public class ISPNCacheConfigurationComponent<K, V> implements ISPNCacheConfigura
         if (serviceRegistration != null) {
             serviceRegistration.unregister();
         }
+    }
+    
+    @Override
+    public String getCacheName() {
+        return cacheName;
     }
 
 }

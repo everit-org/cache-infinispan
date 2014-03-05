@@ -80,6 +80,8 @@ public class CacheFactoryComponent implements CacheFactory {
 
     private ServiceRegistration<CacheFactory> serviceRegistration = null;
 
+    private String servicePID = null;
+
     @Activate
     public void activate(final BundleContext context, final Map<String, ?> config) {
         this.componentConfiguration = config;
@@ -91,7 +93,8 @@ public class CacheFactoryComponent implements CacheFactory {
                 JGroupsTransport.class.getClassLoader() }));
 
         Dictionary<String, Object> serviceProperties = new Hashtable<String, Object>();
-        serviceProperties.put(Constants.SERVICE_PID, config.get(Constants.SERVICE_PID));
+        servicePID = (String) config.get(Constants.SERVICE_PID);
+        serviceProperties.put(Constants.SERVICE_PID, servicePID);
 
         ReflectiveConfigurationBuilderHelper builderHelper = new ReflectiveConfigurationBuilderHelper(
                 componentConfiguration, builder);
@@ -205,15 +208,20 @@ public class CacheFactoryComponent implements CacheFactory {
                 }
             }
         } catch (NoSuchMethodException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
+            throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
+                    + servicePID, e);
         } catch (SecurityException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
+            throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
+                    + servicePID, e);
         } catch (IllegalAccessException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
+            throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
+                    + servicePID, e);
         } catch (IllegalArgumentException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
+            throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
+                    + servicePID, e);
         } catch (InvocationTargetException e) {
-            throw new ComponentException("Could not set configuration with key " + key, e);
+            throw new ComponentException("Could not set configuration with key '" + key + "' in component instance "
+                    + servicePID, e);
         }
     }
 

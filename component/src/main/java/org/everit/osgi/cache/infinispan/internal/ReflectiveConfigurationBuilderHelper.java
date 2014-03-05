@@ -37,13 +37,42 @@ public class ReflectiveConfigurationBuilderHelper {
         return componentConfigHelper;
     }
 
-    public void applyConfigOnBuilderValue(final String key,
-            Class<?> valueType, boolean mandatory) {
-        Object propValue = componentConfigHelper.getPropValue(key, valueType, mandatory);
+    /**
+     * Copies a value from a configuration to the builder if the value is not null.
+     * 
+     * @param key
+     *            The key of the configuration entry.
+     * @param valueType
+     *            The target type of the value.
+     * @param mandatory
+     *            Whether the configuration entry is mandatory or not.
+     */
+    public <T> T applyConfigOnBuilderValue(final String key,
+            Class<T> valueType, boolean mandatory) {
+        Object value = null;
+        if (Enum.class.isAssignableFrom(valueType)) {
+            String stringValue = componentConfigHelper.getPropValue(key, String.class, mandatory);
+            if (stringValue != null) {
+
+                @SuppressWarnings({ "rawtypes", "unchecked" })
+                Class<Enum> enumType = (Class<Enum>) valueType;
+
+                @SuppressWarnings("unchecked")
+                Enum<?> enumValue = Enum.valueOf(enumType, stringValue);
+                value = enumValue;
+            }
+        } else {
+            value = componentConfigHelper.getPropValue(key, valueType, mandatory);
+        }
+
+        @SuppressWarnings("unchecked")
+        T propValue = (T) value;
+
         if (propValue == null) {
-            return;
+            return null;
         }
         applyValue(key, propValue, valueType);
+        return propValue;
     }
 
     public void applyValue(String key, Object value, Class<?> valueType) {

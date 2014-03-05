@@ -29,6 +29,9 @@ import org.infinispan.configuration.cache.RecoveryConfiguration;
  */
 public final class CacheProps {
 
+    public static final String CACHE_CONFIGURATION_COMPONENT_NAME =
+            "org.everit.osgi.cache.infinispan.ISPNCacheConfiguration";
+
     /**
      * Name of the cache. Must be unique.
      */
@@ -248,7 +251,7 @@ public final class CacheProps {
      * Note that this can be overridden on a per-entry basis by using the Cache API.
      */
     public static final String EXPIRATION__LIFESPAN = "expiration.lifespan";
-    
+
     /**
      * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded,
      * the entry will be expired cluster-wide. -1 means the entries never expire.
@@ -269,7 +272,7 @@ public final class CacheProps {
      */
     public static final String EXPIRATION__WAKE_UP_INTERVAL = "expiration.wakeUpInterval";
 
-    public static final String INVOCATION_BATCHING__ENABLED = "invocationBatching.enabled";
+    public static final String INVOCATION_BATCHING__ENABLE = "invocationBatching.enable";
 
     /**
      * Determines whether statistics are gather and reported.
@@ -325,6 +328,17 @@ public final class CacheProps {
      */
     public static final String PERSISTENCE__PASSIVATION = "persistence.passivation";
 
+    /**
+     * Whether the cache is transactional or not.
+     */
+    public static final String TRANSACTION__TRANSACTION_MODE = "transaction.transactionMode";
+    
+    public static final String TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT = "DEFAULT";
+    
+    public static final String TRANSACTION__TRANSACTION_MODE_OPT_TRANSACTIONAL = "TRANSACTIONAL";
+    
+    public static final String TRANSACTION__TRANSACTION_MODE_OPT_NON_TRANSACTIONAL = "NON_TRANSACTIONAL";
+    
     /**
      * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
      * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back
@@ -465,11 +479,11 @@ public final class CacheProps {
     public static final String VERSIONING__SCHEME_OPT_NONE = "NONE";
 
     public static final String VERSIONING__SCHEME_OPT_SIMPLE = "SIMPLE";
-    
+
     public static final String COMMON__BOOLEAN_OPT_DEFAULT = "default";
-    
+
     public static final String COMMON__BOOLEAN_OPT_TRUE = "true";
-    
+
     public static final String COMMON__BOOLEAN_OPT_FALSE = "false";
 
     private CacheProps() {

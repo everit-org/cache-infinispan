@@ -17,9 +17,11 @@
 package org.everit.osgi.cache.infinispan.config;
 
 import org.everit.osgi.cache.api.CacheConfiguration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Configuration;
 
 public interface ISPNCacheConfiguration<K, V> extends CacheConfiguration<K, V> {
 
-    void applyValuesOnBuilder(ConfigurationBuilder builder);
+    Configuration getConfiguration();
+    
+    String getCacheName();
 }
