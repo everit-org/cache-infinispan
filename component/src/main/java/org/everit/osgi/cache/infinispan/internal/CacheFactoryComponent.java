@@ -135,23 +135,23 @@ public class CacheFactoryComponent implements CacheFactory {
             builder.nonClusteredDefault();
         }
 
-        Boolean jmxStatisticsEnabled = configHelper.getPropValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED,
-                Boolean.class, true);
+        String jmxStatisticsCacheManagerName = builderHelper.applyConfigOnBuilderValue(
+                CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, String.class, false);
 
-        if (jmxStatisticsEnabled) {
-            builderHelper.applyValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, jmxStatisticsEnabled,
-                    boolean.class);
-
-            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
-                    String.class,
-                    false);
-
-            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, String.class,
-                    false);
-
-            builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
-                    Boolean.class, false);
+        if (jmxStatisticsCacheManagerName == null) {
+            jmxStatisticsCacheManagerName = servicePID;
+            builderHelper.applyValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
+                    jmxStatisticsCacheManagerName, String.class);
         }
+
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, String.class,
+                false);
+
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
+                Boolean.class, false);
+
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED,
+                boolean.class, false);
 
         builderHelper.applyConfigOnBuilderValue(CacheFactoryProps.SITE__LOCAL_SITE, String.class, false);
 
@@ -178,15 +178,13 @@ public class CacheFactoryComponent implements CacheFactory {
         transferValueToServiceProperties(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, globalConfig,
                 serviceProperties);
 
-        if (jmxStatisticsEnabled) {
-            transferValueToServiceProperties(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, globalConfig,
-                    serviceProperties);
+        serviceProperties.put(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
+                jmxStatisticsCacheManagerName);
 
-            transferValueToServiceProperties("globalJmxStatistics.domain", globalConfig, serviceProperties);
+        transferValueToServiceProperties("globalJmxStatistics.domain", globalConfig, serviceProperties);
 
-            transferValueToServiceProperties(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
-                    globalConfig, serviceProperties);
-        }
+        transferValueToServiceProperties(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
+                globalConfig, serviceProperties);
 
         transferValueToServiceProperties("sites.localSite", globalConfig, serviceProperties);
 

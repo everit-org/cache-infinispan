@@ -54,7 +54,6 @@ public class ReflectiveComponentConfigurationHelper {
             final boolean mandatory) {
         Object value = getObjectValue(key, mandatory);
         if ((value == null) || (String.class.isInstance(value) && ((String) value).trim().equals(""))) {
-            System.out.println(" VALUEEEEEEEEE NULL " + key);
             if (mandatory) {
                 System.out.println("AND MANDATORY");
                 throw new ComponentException("Value of mandatory configuration " + key + " is not specified.");
@@ -66,6 +65,8 @@ public class ReflectiveComponentConfigurationHelper {
             throw new ComponentException("Type of configuration property " + key + " must be " + valueType.toString()
                     + ". Current type is " + value.getClass().toString());
         }
-        return (V) value;
+        @SuppressWarnings("unchecked")
+        V typedValue = (V) value;
+        return typedValue;
     }
 }

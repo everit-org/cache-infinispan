@@ -43,18 +43,27 @@ public class ConfigurationInitComponent {
         try {
             Dictionary<String, Object> cacheFactoryProps = new Hashtable<String, Object>();
             cacheFactoryProps.put(CacheFactoryProps.CLUSTERED, false);
-            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME,
+            cacheFactoryProps.put(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, false);
+            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, "("
+                    + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=false)",
                     cacheFactoryProps);
+
+            Dictionary<String, Object> cacheFactoryProps2 = new Hashtable<String, Object>();
+            cacheFactoryProps2.put(CacheFactoryProps.CLUSTERED, false);
+            cacheFactoryProps2.put(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, true);
+            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, "("
+                    + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=true)",
+                    cacheFactoryProps2);
 
             Dictionary<String, Object> simpleCacheConfigProps = new Hashtable<String, Object>();
             simpleCacheConfigProps.put(CacheProps.CACHE_NAME, "simpleCache");
-            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME,
-                    simpleCacheConfigProps);
+            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME, "(" + CacheProps.CACHE_NAME
+                    + "=simpleCache)", simpleCacheConfigProps);
 
             Dictionary<String, Object> transactionalCacheConfigProps = new Hashtable<String, Object>();
             transactionalCacheConfigProps.put(CacheProps.CACHE_NAME, "transactionalCache");
-            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME,
-                    transactionalCacheConfigProps);
+            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME, "(" + CacheProps.CACHE_NAME
+                    + "=transactionalCache)", transactionalCacheConfigProps);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -67,12 +76,18 @@ public class ConfigurationInitComponent {
         this.configAdmin = configAdmin;
     }
 
-    private String getOrCreateConfiguration(final String factoryPid, final Dictionary<String, Object> props)
-            throws IOException, InvalidSyntaxException {
-        Configuration[] configurations = configAdmin.listConfigurations("(service.factoryPid=" + factoryPid + ")");
-        if ((configurations != null) && (configurations.length > 0)) {
-            return configurations[0].getPid();
+    private String getOrCreateConfiguration(final String factoryPid, final String filterParam,
+            final Dictionary<String, Object> props) throws IOException, InvalidSyntaxException {
+        String filter = "(service.factoryPid=" + factoryPid + ")";
+        if (filterParam != null) {
+            filter = "(&" + filter + filterParam + ")";
         }
+
+        Configuration[] configurations = configAdmin.listConfigurations(filter);
+        if (configurations != null && configurations.length > 0) {
+            return configurations[0].getFactoryPid();
+        }
+
         Configuration configuration = configAdmin.createFactoryConfiguration(factoryPid, null);
         configuration.update(props);
         return configuration.getPid();
