@@ -139,6 +139,8 @@ public class CacheFactoryComponent implements CacheFactory {
                 CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, String.class, false);
 
         if (jmxStatisticsCacheManagerName == null) {
+            // The cache manager name must be unique even if the jmx is not enabled in configuration. Therefore the
+            // default is the service PID that is unique for sure.
             jmxStatisticsCacheManagerName = servicePID;
             builderHelper.applyValue(CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
                     jmxStatisticsCacheManagerName, String.class);
