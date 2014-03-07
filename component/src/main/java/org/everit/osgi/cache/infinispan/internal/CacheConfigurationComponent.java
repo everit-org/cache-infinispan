@@ -76,7 +76,7 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheProps.EXPIRATION__WAKE_UP_INTERVAL, longValue = 60000),
         // TODO support persistence stores @Property(name = CacheProps.PERSISTENCE__PASSIVATION, boolValue = false),
         @Property(name = CacheProps.INVOCATION_BATCHING__ENABLE, boolValue = false),
-        @Property(name = CacheProps.CLUSTERING__CACHE_MODE,
+        @Property(name = CacheProps.CLUSTERING__CACHE_MODE, value = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
                 options = { @PropertyOption(name = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
                         value = CacheProps.CLUSTERING__CACHE_MODE_OPT_LOCAL),
                         @PropertyOption(name = CacheProps.CLUSTERING__CACHEMODE_OPT_REPL_SYNC,
