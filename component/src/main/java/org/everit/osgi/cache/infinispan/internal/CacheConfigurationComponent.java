@@ -31,7 +31,7 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Reference;
-import org.everit.osgi.cache.api.CacheConfiguration;
+import org.everit.osgi.cache.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheProps;
 import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
 import org.infinispan.configuration.cache.CacheMode;

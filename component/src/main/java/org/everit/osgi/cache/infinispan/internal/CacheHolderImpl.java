@@ -18,7 +18,7 @@ package org.everit.osgi.cache.infinispan.internal;
 
 import java.util.concurrent.ConcurrentMap;
 
-import org.everit.osgi.cache.api.CacheHolder;
+import org.everit.osgi.cache.CacheHolder;
 import org.infinispan.AdvancedCache;
 
 public class CacheHolderImpl<K, V> implements CacheHolder<K, V> {
