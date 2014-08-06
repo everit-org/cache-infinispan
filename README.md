@@ -1,18 +1,7 @@
 cache-infinispan-component
 ==========================
 
-An Infinispan based component which implements the `org.everit.osgi.cache.api`
-so it can configure and return a ready to use cache instance. 
-
-
-# Introduction
-
-The aim of the cache-infinispan-component is to provide a simple way to create 
-and customize `java.util.concurrent.ConcurrentMap` instances.
-With the help of these components you can obtain a cache instance with 
-Distribution/Invalidation/Replication clustering or Local data storage modes
-just in a few lines of code.
-
+An Infinispan based components that implement `org.everit.osgi.cache.api`.
 
 # Usage
 
@@ -24,21 +13,10 @@ In order to use the component you need to add this dependency to the pom.xml:
     	<version>1.0.0</version>
     </dependency>
 
-At next, it is required to define a configuration with [ConfigurationAdmin]
-(http://blog.osgi.org/2010/06/how-to-use-config-admin.html), for example 
-with the [Felix Web Console](http://felix.apache.org/site/apache-felix-web-console.html).
+Two configurations must be defined. One for CacheConfiguration and one for
+CacheFactory. See the metatype information about configuration possibilities.
 
-First, a new instance of CacheFactory component must be configured. Secondly,
-a CacheConfiguration component should be configured. Both components will
-register OSGi services.
+To see an example about the usage of the API, please see the [README file][1]
+of the API project.
 
-Having those services, the factory can be used in the following way:
-
-```java
-    CacheHolder<String, String> cacheHolder = cacheFactory.createCache(
-            cacheConfiguration, this.getClass().getClassLoader());
-    ConcurrentMap<String, String> cache = cacheHolder.getCache();
-    cache.put("1", "1");
-       ...
-    cacheHolder.close();
-```
+[1]: https://github.com/everit-org/cache-api/blob/master/README.md
