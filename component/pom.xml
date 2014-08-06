@@ -84,7 +84,8 @@
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Import-Package> * </Import-Package>
             <Export-Package>
-              ${project.artifactId}
+              org.everit.osgi.cache.infinispan,
+              org.everit.osgi.cache.infinispan.config
             </Export-Package>
           </instructions>
         </configuration>

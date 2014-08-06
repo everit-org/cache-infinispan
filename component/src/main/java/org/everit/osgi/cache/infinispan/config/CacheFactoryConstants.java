@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Everit - Infinispan Cache.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.everit.osgi.cache.infinispan;
+package org.everit.osgi.cache.infinispan.config;
 
 import org.infinispan.configuration.cache.CacheMode;
 
-public final class ISPNCacheFactoryConstants {
+public final class CacheFactoryConstants {
 
     public static final String SERVICE_FACTORYPID_CACHE_FACTORY =
             "org.everit.osgi.cache.infinispan.CacheFactory";
@@ -100,7 +100,7 @@ public final class ISPNCacheFactoryConstants {
      */
     public static final String SITE__LOCAL_SITE = "site.localSite";
 
-    private ISPNCacheFactoryConstants() {
+    private CacheFactoryConstants() {
     }
 
 }

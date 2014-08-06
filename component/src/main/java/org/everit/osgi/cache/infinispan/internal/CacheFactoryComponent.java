@@ -33,7 +33,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.CacheConfiguration;
 import org.everit.osgi.cache.CacheFactory;
 import org.everit.osgi.cache.CacheHolder;
-import org.everit.osgi.cache.infinispan.ISPNCacheFactoryConstants;
+import org.everit.osgi.cache.infinispan.config.CacheFactoryConstants;
 import org.everit.osgi.cache.infinispan.ISPNCacheConfiguration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -54,21 +54,21 @@ import org.osgi.service.log.LogService;
 /**
  * A component that can customize and create Cache instances.
  */
-@Component(name = ISPNCacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, metatype = true, configurationFactory = true,
+@Component(name = CacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, metatype = true, configurationFactory = true,
         policy = ConfigurationPolicy.REQUIRE, immediate = true)
 @org.apache.felix.scr.annotations.Properties({
-        @Property(name = ISPNCacheFactoryConstants.CLUSTERED, boolValue = false),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__CLUSTER_NAME),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__MACHINE_ID),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__NODE_NAME),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__RACK_ID),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__SITE_ID),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, longValue = 4 * 60 * 1000),
-        @Property(name = ISPNCacheFactoryConstants.TRANSPORT__CONFIGURATION_XML),
-        @Property(name = ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, boolValue = false),
-        @Property(name = ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__JMX_DOMAIN),
-        @Property(name = ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS, boolValue = false),
-        @Property(name = ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME),
+        @Property(name = CacheFactoryConstants.CLUSTERED, boolValue = false),
+        @Property(name = CacheFactoryConstants.TRANSPORT__CLUSTER_NAME),
+        @Property(name = CacheFactoryConstants.TRANSPORT__MACHINE_ID),
+        @Property(name = CacheFactoryConstants.TRANSPORT__NODE_NAME),
+        @Property(name = CacheFactoryConstants.TRANSPORT__RACK_ID),
+        @Property(name = CacheFactoryConstants.TRANSPORT__SITE_ID),
+        @Property(name = CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, longValue = 4 * 60 * 1000),
+        @Property(name = CacheFactoryConstants.TRANSPORT__CONFIGURATION_XML),
+        @Property(name = CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, boolValue = false),
+        @Property(name = CacheFactoryConstants.GLOBAL_JMX_STATISTICS__JMX_DOMAIN),
+        @Property(name = CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS, boolValue = false),
+        @Property(name = CacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME),
         @Property(name = "logService.target"),
         @Property(name = Constants.SERVICE_DESCRIPTION, propertyPrivate = false)
 })
@@ -108,25 +108,25 @@ public class CacheFactoryComponent implements CacheFactory {
 
         ReflectiveComponentConfigurationHelper configHelper = builderHelper.getComponentConfigHelper();
 
-        clustered = configHelper.getPropValue(ISPNCacheFactoryConstants.CLUSTERED, boolean.class, true);
-        serviceProperties.put(ISPNCacheFactoryConstants.CLUSTERED, clustered);
+        clustered = configHelper.getPropValue(CacheFactoryConstants.CLUSTERED, boolean.class, true);
+        serviceProperties.put(CacheFactoryConstants.CLUSTERED, clustered);
         if (clustered) {
-            serviceProperties.put(ISPNCacheFactoryConstants.CLUSTERED, Boolean.TRUE);
+            serviceProperties.put(CacheFactoryConstants.CLUSTERED, Boolean.TRUE);
             builder.clusteredDefault();
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__CLUSTER_NAME, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__CLUSTER_NAME, String.class, false);
 
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, long.class,
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, long.class,
                     false);
 
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__MACHINE_ID, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__MACHINE_ID, String.class, false);
 
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__NODE_NAME, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__NODE_NAME, String.class, false);
 
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__RACK_ID, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__RACK_ID, String.class, false);
 
-            builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.TRANSPORT__SITE_ID, String.class, false);
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__SITE_ID, String.class, false);
 
-            String jgroupsXML = configHelper.getPropValue(ISPNCacheFactoryConstants.TRANSPORT__CONFIGURATION_XML, String.class,
+            String jgroupsXML = configHelper.getPropValue(CacheFactoryConstants.TRANSPORT__CONFIGURATION_XML, String.class,
                     false);
 
             if (jgroupsXML != null) {
@@ -137,56 +137,56 @@ public class CacheFactoryComponent implements CacheFactory {
         }
 
         String jmxStatisticsCacheManagerName = builderHelper.applyConfigOnBuilderValue(
-                ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, String.class, false);
+                CacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME, String.class, false);
 
         if (jmxStatisticsCacheManagerName == null) {
             // The cache manager name must be unique even if the jmx is not enabled in configuration. Therefore the
             // default is the service PID that is unique for sure.
             jmxStatisticsCacheManagerName = servicePID;
-            builderHelper.applyValue(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
+            builderHelper.applyValue(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
                     jmxStatisticsCacheManagerName, String.class);
         }
 
-        builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, String.class,
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__JMX_DOMAIN, String.class,
                 false);
 
-        builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
                 Boolean.class, false);
 
-        builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED,
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED,
                 boolean.class, false);
 
-        builderHelper.applyConfigOnBuilderValue(ISPNCacheFactoryConstants.SITE__LOCAL_SITE, String.class, false);
+        builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.SITE__LOCAL_SITE, String.class, false);
 
         GlobalConfiguration globalConfig = builder.build();
 
         if (clustered) {
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__CLUSTER_NAME, globalConfig,
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__CLUSTER_NAME, globalConfig,
                     serviceProperties);
 
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, globalConfig,
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, globalConfig,
                     serviceProperties);
 
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__MACHINE_ID, globalConfig, serviceProperties);
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__NODE_NAME, globalConfig, serviceProperties);
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__RACK_ID, globalConfig, serviceProperties);
-            transferValueToServiceProperties(ISPNCacheFactoryConstants.TRANSPORT__SITE_ID, globalConfig, serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__MACHINE_ID, globalConfig, serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__NODE_NAME, globalConfig, serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__RACK_ID, globalConfig, serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__SITE_ID, globalConfig, serviceProperties);
 
             String jgroupsXML = globalConfig.transport().properties().getProperty("configurationXml");
             if (jgroupsXML != null) {
-                serviceProperties.put(ISPNCacheFactoryConstants.TRANSPORT__CONFIGURATION_XML, jgroupsXML);
+                serviceProperties.put(CacheFactoryConstants.TRANSPORT__CONFIGURATION_XML, jgroupsXML);
             }
         }
 
-        transferValueToServiceProperties(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, globalConfig,
+        transferValueToServiceProperties(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, globalConfig,
                 serviceProperties);
 
-        serviceProperties.put(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
+        serviceProperties.put(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME,
                 jmxStatisticsCacheManagerName);
 
         transferValueToServiceProperties("globalJmxStatistics.domain", globalConfig, serviceProperties);
 
-        transferValueToServiceProperties(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
+        transferValueToServiceProperties(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS,
                 globalConfig, serviceProperties);
 
         transferValueToServiceProperties("sites.localSite", globalConfig, serviceProperties);

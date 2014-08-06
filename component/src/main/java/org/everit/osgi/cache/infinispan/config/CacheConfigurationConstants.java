@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Everit - Infinispan Cache.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.everit.osgi.cache.infinispan;
+package org.everit.osgi.cache.infinispan.config;
 
 import java.util.Map;
 
@@ -27,7 +27,7 @@ import org.infinispan.configuration.cache.RecoveryConfiguration;
 /**
  * Defines standard names for infinispan cache factory component configuration
  */
-public final class ISPNCacheConfigurationConstants {
+public final class CacheConfigurationConstants {
 
     public static final String SERVICE_FACTORYPID_CACHE_CONFIGURATION =
             "org.everit.osgi.cache.infinispan.CacheConfiguration";
@@ -486,6 +486,6 @@ public final class ISPNCacheConfigurationConstants {
 
     public static final String COMMON__BOOLEAN_OPT_FALSE = "false";
 
-    private ISPNCacheConfigurationConstants() {
+    private CacheConfigurationConstants() {
     }
 }

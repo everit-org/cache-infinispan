@@ -24,8 +24,8 @@ import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.everit.osgi.cache.infinispan.ISPNCacheConfigurationConstants;
-import org.everit.osgi.cache.infinispan.ISPNCacheFactoryConstants;
+import org.everit.osgi.cache.infinispan.config.CacheConfigurationConstants;
+import org.everit.osgi.cache.infinispan.config.CacheFactoryConstants;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
@@ -42,27 +42,29 @@ public class ConfigurationInitComponent {
     public void activate(final BundleContext bundleContext) {
         try {
             Dictionary<String, Object> cacheFactoryProps = new Hashtable<String, Object>();
-            cacheFactoryProps.put(ISPNCacheFactoryConstants.CLUSTERED, false);
-            cacheFactoryProps.put(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, false);
-            getOrCreateConfiguration(ISPNCacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, "("
-                    + ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED + "=false)",
+            cacheFactoryProps.put(CacheFactoryConstants.CLUSTERED, false);
+            cacheFactoryProps.put(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, false);
+            getOrCreateConfiguration(CacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, "("
+                    + CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED + "=false)",
                     cacheFactoryProps);
 
             Dictionary<String, Object> cacheFactoryProps2 = new Hashtable<String, Object>();
-            cacheFactoryProps2.put(ISPNCacheFactoryConstants.CLUSTERED, false);
-            cacheFactoryProps2.put(ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, true);
-            getOrCreateConfiguration(ISPNCacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, "("
-                    + ISPNCacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED + "=true)",
+            cacheFactoryProps2.put(CacheFactoryConstants.CLUSTERED, false);
+            cacheFactoryProps2.put(CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED, true);
+            getOrCreateConfiguration(CacheFactoryConstants.SERVICE_FACTORYPID_CACHE_FACTORY, "("
+                    + CacheFactoryConstants.GLOBAL_JMX_STATISTICS__ENABLED + "=true)",
                     cacheFactoryProps2);
 
             Dictionary<String, Object> simpleCacheConfigProps = new Hashtable<String, Object>();
-            simpleCacheConfigProps.put(ISPNCacheConfigurationConstants.CACHE_NAME, "simpleCache");
-            getOrCreateConfiguration(ISPNCacheConfigurationConstants.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "(" + ISPNCacheConfigurationConstants.CACHE_NAME
+            simpleCacheConfigProps.put(CacheConfigurationConstants.CACHE_NAME, "simpleCache");
+            getOrCreateConfiguration(CacheConfigurationConstants.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "("
+                    + CacheConfigurationConstants.CACHE_NAME
                     + "=simpleCache)", simpleCacheConfigProps);
 
             Dictionary<String, Object> transactionalCacheConfigProps = new Hashtable<String, Object>();
-            transactionalCacheConfigProps.put(ISPNCacheConfigurationConstants.CACHE_NAME, "transactionalCache");
-            getOrCreateConfiguration(ISPNCacheConfigurationConstants.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "(" + ISPNCacheConfigurationConstants.CACHE_NAME
+            transactionalCacheConfigProps.put(CacheConfigurationConstants.CACHE_NAME, "transactionalCache");
+            getOrCreateConfiguration(CacheConfigurationConstants.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "("
+                    + CacheConfigurationConstants.CACHE_NAME
                     + "=transactionalCache)", transactionalCacheConfigProps);
 
         } catch (IOException e) {
