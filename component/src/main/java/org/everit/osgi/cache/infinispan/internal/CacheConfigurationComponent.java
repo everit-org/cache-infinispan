@@ -32,8 +32,8 @@ import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.CacheConfiguration;
-import org.everit.osgi.cache.infinispan.config.CacheConfigurationProps;
-import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
+import org.everit.osgi.cache.infinispan.CacheConfigurationProps;
+import org.everit.osgi.cache.infinispan.ISPNCacheConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -76,7 +76,8 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheConfigurationProps.EXPIRATION__WAKE_UP_INTERVAL, longValue = 60000),
         // TODO support persistence stores @Property(name = CacheProps.PERSISTENCE__PASSIVATION, boolValue = false),
         @Property(name = CacheConfigurationProps.INVOCATION_BATCHING__ENABLE, boolValue = false),
-        @Property(name = CacheConfigurationProps.CLUSTERING__CACHE_MODE, value = CacheConfigurationProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
+        @Property(name = CacheConfigurationProps.CLUSTERING__CACHE_MODE,
+                value = CacheConfigurationProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
                 options = { @PropertyOption(name = CacheConfigurationProps.CLUSTERING__CACHE_MODE_OPT_LOCAL,
                         value = CacheConfigurationProps.CLUSTERING__CACHE_MODE_OPT_LOCAL),
                         @PropertyOption(name = CacheConfigurationProps.CLUSTERING__CACHEMODE_OPT_REPL_SYNC,
@@ -161,13 +162,16 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheConfigurationProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL, longValue = 1000),
         @Property(name = CacheConfigurationProps.TRANSACTION__COMPLETED_TX_TIMEOUT, longValue = 15000),
         @Property(name = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL,
-                value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT, options = { @PropertyOption(
-                        name = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT,
-                        value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT), @PropertyOption(
-                        name = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER,
-                        value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER) }),
+                value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT, options = {
+                        @PropertyOption(
+                                name = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT,
+                                value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_DEFAULT),
+                        @PropertyOption(
+                                name = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER,
+                                value = CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL_OPT_TOTAL_ORDER) }),
         @Property(name = CacheConfigurationProps.VERSIONING__ENABLED, boolValue = false),
-        @Property(name = CacheConfigurationProps.VERSIONING__SCHEME, value = CacheConfigurationProps.VERSIONING__SCHEME_OPT_NONE,
+        @Property(name = CacheConfigurationProps.VERSIONING__SCHEME,
+                value = CacheConfigurationProps.VERSIONING__SCHEME_OPT_NONE,
                 options = { @PropertyOption(name = CacheConfigurationProps.VERSIONING__SCHEME_OPT_NONE,
                         value = CacheConfigurationProps.VERSIONING__SCHEME_OPT_NONE),
                         @PropertyOption(name = CacheConfigurationProps.VERSIONING__SCHEME_OPT_SIMPLE,
@@ -177,6 +181,7 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheConfigurationProps.JMX_STATISTICS__ENABLED, boolValue = false),
         @Property(name = CacheConfigurationProps.TRANSACTION__TRANSACTION_MANAGER__TARGET),
         @Property(name = CacheConfigurationProps.TRANSACTION__TRANSACTION_SYNCHRONIZATION_REGISTRY__TARGET),
+        @Property(name = Constants.SERVICE_DESCRIPTION)
 })
 public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration<K, V> {
 
@@ -214,28 +219,36 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         h.applyConfigOnBuilderValue(CacheConfigurationProps.EXPIRATION__REAPER_ENABLED, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.EXPIRATION__WAKE_UP_INTERVAL, long.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.INVOCATION_BATCHING__ENABLE, boolean.class, false);
-        CacheMode cacheMode = h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__CACHE_MODE, CacheMode.class, false);
+        CacheMode cacheMode = h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__CACHE_MODE,
+                CacheMode.class, false);
         if ((cacheMode != null) && !CacheMode.LOCAL.equals(cacheMode)) {
-            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, boolean.class, false);
+            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__ASYNC_MARSHALLING, boolean.class,
+                    false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__USE_REPL_QUEUE, boolean.class, false);
-            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, long.class, false);
-            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS, int.class, false);
+            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__REPL_QUEUE_INTERVAL, long.class,
+                    false);
+            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__ASYNC__REPL_QUEUE_MAX_ELEMENTS, int.class,
+                    false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__HASH__NUM_OWNERS, int.class, false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__HASH__NUM_SEGMENTS, int.class, false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__HASH__CAPACITY_FACTOR, Float.class, false);
-            Boolean l1Enabled = h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__ENABLED, Boolean.class, false);
+            Boolean l1Enabled = h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__ENABLED,
+                    Boolean.class, false);
 
             if ((l1Enabled != null) && l1Enabled) {
-                h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, int.class, false);
+                h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__INVALIDATION_TRESHOLD, int.class,
+                        false);
                 h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__LIFESPAN, long.class, false);
                 h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__ON_REHASH, boolean.class, false);
-                h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, long.class, false);
+                h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__L1__CLEANUP_TASK_FREQUENCY, long.class,
+                        false);
             }
 
             applyNullableBoolean(CacheConfigurationProps.CLUSTERING__STATE_TRANSFER__FETCH_IN_MEMORY_STATE, h);
             applyNullableBoolean(CacheConfigurationProps.CLUSTERING__STATE_TRANSFER__AWAIT_INITIAL_TRANSFER, h);
 
-            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE, int.class, false);
+            h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__STATE_TRANSFER__CHUNK_SIZE, int.class,
+                    false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__STATE_TRANSFER__TIMEOUT, long.class, false);
             h.applyConfigOnBuilderValue(CacheConfigurationProps.CLUSTERING__SYNC__REPL_TIMEOUT, long.class, false);
         }
@@ -244,16 +257,19 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         h.applyConfigOnBuilderValue(CacheConfigurationProps.LOCKING__LOCK_ACQUISITION_TIMEOUT, long.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.LOCKING__USE_LOCK_STRIPING, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.LOCKING_WRITE_SKEW_CHECK, boolean.class, false);
-        Boolean deadlockDetectionEnabled = h.applyConfigOnBuilderValue(CacheConfigurationProps.DEADLOCK_DETECTION__ENABLED,
+        Boolean deadlockDetectionEnabled = h.applyConfigOnBuilderValue(
+                CacheConfigurationProps.DEADLOCK_DETECTION__ENABLED,
                 boolean.class, false);
         if ((deadlockDetectionEnabled != null) && deadlockDetectionEnabled) {
             h.applyConfigOnBuilderValue(CacheConfigurationProps.DEADLOCKDETECTION__SPIN_DURATION, long.class, false);
         }
 
-        String transactionModeString = cch.getPropValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_MODE, String.class, false);
+        String transactionModeString = cch.getPropValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_MODE,
+                String.class, false);
         if ((transactionModeString != null)
                 && !CacheConfigurationProps.TRANSACTION__TRANSACTION_MODE_OPT_DEFAULT.equals(transactionModeString)) {
-            h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_MODE, TransactionMode.class, false);
+            h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_MODE, TransactionMode.class,
+                    false);
         }
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__AUTO_COMMIT, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__CACHE_STOP_TIMEOUT, long.class, false);
@@ -262,11 +278,14 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__SYNC_ROLLBACK_PHASE, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__USE_SYNCHRONIZATION, boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__RECOVERY__ENABLED, boolean.class, false);
-        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME, String.class, false);
-        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS, boolean.class, false);
+        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__RECOVERY__RECOVERY_INFO_CACHE_NAME,
+                String.class, false);
+        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__USE_1PC_FOR_AUTO_COMMIT_TRANSACTIONS,
+                boolean.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__REAPER_WAKE_UP_INTERVAL, long.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__COMPLETED_TX_TIMEOUT, long.class, false);
-        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL, TransactionProtocol.class, false);
+        h.applyConfigOnBuilderValue(CacheConfigurationProps.TRANSACTION__TRANSACTION_PROTOCOL,
+                TransactionProtocol.class, false);
 
         builder.transaction().transactionManagerLookup(new TransactionManagerLookup() {
 
@@ -284,7 +303,8 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
             }
         });
 
-        Boolean versioning = h.applyConfigOnBuilderValue(CacheConfigurationProps.VERSIONING__ENABLED, boolean.class, false);
+        Boolean versioning = h.applyConfigOnBuilderValue(CacheConfigurationProps.VERSIONING__ENABLED, boolean.class,
+                false);
         if ((versioning != null) && versioning) {
             h.applyConfigOnBuilderValue(CacheConfigurationProps.VERSIONING__SCHEME, VersioningScheme.class, false);
         }

@@ -33,8 +33,8 @@ import org.apache.felix.scr.annotations.Reference;
 import org.everit.osgi.cache.CacheConfiguration;
 import org.everit.osgi.cache.CacheFactory;
 import org.everit.osgi.cache.CacheHolder;
-import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
-import org.everit.osgi.cache.infinispan.config.ISPNCacheConfiguration;
+import org.everit.osgi.cache.infinispan.CacheFactoryProps;
+import org.everit.osgi.cache.infinispan.ISPNCacheConfiguration;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
@@ -69,7 +69,8 @@ import org.osgi.service.log.LogService;
         @Property(name = CacheFactoryProps.GLOBAL_JMX_STATISTICS__JMX_DOMAIN),
         @Property(name = CacheFactoryProps.GLOBAL_JMX_STATISTICS__ALLOW_DUPLICATE_DOMAINS, boolValue = false),
         @Property(name = CacheFactoryProps.GLOBAL_JMX_STATISTICS__CACHE_MANAGER_NAME),
-        @Property(name = "logService.target")
+        @Property(name = "logService.target"),
+        @Property(name = Constants.SERVICE_DESCRIPTION)
 })
 public class CacheFactoryComponent implements CacheFactory {
 
