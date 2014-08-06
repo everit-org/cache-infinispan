@@ -18,7 +18,7 @@ package org.everit.osgi.cache.infinispan;
 
 import org.infinispan.configuration.cache.CacheMode;
 
-public final class CacheFactoryProps {
+public final class ISPNCacheFactoryConstants {
 
     public static final String SERVICE_FACTORYPID_CACHE_FACTORY =
             "org.everit.osgi.cache.infinispan.CacheFactory";
@@ -100,7 +100,7 @@ public final class CacheFactoryProps {
      */
     public static final String SITE__LOCAL_SITE = "site.localSite";
 
-    private CacheFactoryProps() {
+    private ISPNCacheFactoryConstants() {
     }
 
 }
