@@ -81,6 +81,7 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.5.0</version>
         <extensions>true</extensions>
         <configuration>
           <instructions>
@@ -95,7 +96,7 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-scr-plugin</artifactId>
-        <version>1.15.0</version>
+        <version>1.19.0</version>
         <executions>
           <execution>
             <id>generate-scr-scrdescriptor</id>
@@ -122,7 +123,7 @@
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.scr.annotations</artifactId>
-      <version>1.9.6</version>
+      <version>1.9.8</version>
     </dependency>
 
     <dependency>
