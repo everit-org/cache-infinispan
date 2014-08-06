@@ -20,7 +20,7 @@ import org.infinispan.configuration.cache.CacheMode;
 
 public final class CacheFactoryProps {
 
-    public static final String CACHE_FACTORY_COMPONENT_NAME =
+    public static final String SERVICE_FACTORYPID_CACHE_FACTORY =
             "org.everit.osgi.cache.infinispan.CacheFactory";
 
     /**

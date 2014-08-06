@@ -54,7 +54,7 @@ import org.osgi.service.log.LogService;
 /**
  * A component that can customize and create Cache instances.
  */
-@Component(name = CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, metatype = true, configurationFactory = true,
+@Component(name = CacheFactoryProps.SERVICE_FACTORYPID_CACHE_FACTORY, metatype = true, configurationFactory = true,
         policy = ConfigurationPolicy.REQUIRE, immediate = true)
 @org.apache.felix.scr.annotations.Properties({
         @Property(name = CacheFactoryProps.CLUSTERED, boolValue = false),

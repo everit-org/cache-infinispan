@@ -25,7 +25,7 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
-import org.everit.osgi.cache.infinispan.config.CacheProps;
+import org.everit.osgi.cache.infinispan.config.CacheConfigurationProps;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
@@ -44,25 +44,25 @@ public class ConfigurationInitComponent {
             Dictionary<String, Object> cacheFactoryProps = new Hashtable<String, Object>();
             cacheFactoryProps.put(CacheFactoryProps.CLUSTERED, false);
             cacheFactoryProps.put(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, false);
-            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, "("
+            getOrCreateConfiguration(CacheFactoryProps.SERVICE_FACTORYPID_CACHE_FACTORY, "("
                     + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=false)",
                     cacheFactoryProps);
 
             Dictionary<String, Object> cacheFactoryProps2 = new Hashtable<String, Object>();
             cacheFactoryProps2.put(CacheFactoryProps.CLUSTERED, false);
             cacheFactoryProps2.put(CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED, true);
-            getOrCreateConfiguration(CacheFactoryProps.CACHE_FACTORY_COMPONENT_NAME, "("
+            getOrCreateConfiguration(CacheFactoryProps.SERVICE_FACTORYPID_CACHE_FACTORY, "("
                     + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=true)",
                     cacheFactoryProps2);
 
             Dictionary<String, Object> simpleCacheConfigProps = new Hashtable<String, Object>();
-            simpleCacheConfigProps.put(CacheProps.CACHE_NAME, "simpleCache");
-            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME, "(" + CacheProps.CACHE_NAME
+            simpleCacheConfigProps.put(CacheConfigurationProps.CACHE_NAME, "simpleCache");
+            getOrCreateConfiguration(CacheConfigurationProps.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "(" + CacheConfigurationProps.CACHE_NAME
                     + "=simpleCache)", simpleCacheConfigProps);
 
             Dictionary<String, Object> transactionalCacheConfigProps = new Hashtable<String, Object>();
-            transactionalCacheConfigProps.put(CacheProps.CACHE_NAME, "transactionalCache");
-            getOrCreateConfiguration(CacheProps.CACHE_CONFIGURATION_COMPONENT_NAME, "(" + CacheProps.CACHE_NAME
+            transactionalCacheConfigProps.put(CacheConfigurationProps.CACHE_NAME, "transactionalCache");
+            getOrCreateConfiguration(CacheConfigurationProps.SERVICE_FACTORYPID_CACHE_CONFIGURATION, "(" + CacheConfigurationProps.CACHE_NAME
                     + "=transactionalCache)", transactionalCacheConfigProps);
 
         } catch (IOException e) {

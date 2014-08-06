@@ -27,9 +27,9 @@ import org.infinispan.configuration.cache.RecoveryConfiguration;
 /**
  * Defines standard names for infinispan cache factory component configuration
  */
-public final class CacheProps {
+public final class CacheConfigurationProps {
 
-    public static final String CACHE_CONFIGURATION_COMPONENT_NAME =
+    public static final String SERVICE_FACTORYPID_CACHE_CONFIGURATION =
             "org.everit.osgi.cache.infinispan.CacheConfiguration";
 
     /**
@@ -486,6 +486,6 @@ public final class CacheProps {
 
     public static final String COMMON__BOOLEAN_OPT_FALSE = "false";
 
-    private CacheProps() {
+    private CacheConfigurationProps() {
     }
 }

@@ -28,7 +28,7 @@ import org.everit.osgi.cache.CacheConfiguration;
 import org.everit.osgi.cache.CacheFactory;
 import org.everit.osgi.cache.CacheHolder;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryProps;
-import org.everit.osgi.cache.infinispan.config.CacheProps;
+import org.everit.osgi.cache.infinispan.config.CacheConfigurationProps;
 import org.everit.osgi.dev.testrunner.TestDuringDevelopment;
 import org.everit.osgi.transaction.helper.api.Callback;
 import org.everit.osgi.transaction.helper.api.TransactionHelper;
@@ -51,7 +51,7 @@ public class CacheFactoryComponentTest
     @Reference(target = "(" + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=true)")
     private CacheFactory jmxCacheFactory;
 
-    @Reference(target = "(" + CacheProps.CACHE_NAME + "=simpleCache)")
+    @Reference(target = "(" + CacheConfigurationProps.CACHE_NAME + "=simpleCache)")
     private CacheConfiguration<String, String> simpleCacheConfiguration;
 
     @Reference(target = "(" + CacheFactoryProps.GLOBAL_JMX_STATISTICS__ENABLED + "=false)")
@@ -60,7 +60,7 @@ public class CacheFactoryComponentTest
     @Reference
     private TransactionHelper t;
 
-    @Reference(target = "(" + CacheProps.CACHE_NAME + "=transactionalCache)")
+    @Reference(target = "(" + CacheConfigurationProps.CACHE_NAME + "=transactionalCache)")
     private CacheConfiguration<String, String> transactionalCacheConfiguration;
 
     public void setCacheConfiguration(final CacheConfiguration<String, String> cacheConfiguration) {
