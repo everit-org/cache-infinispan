@@ -321,8 +321,8 @@ public final class CacheConfigurationConstants {
      * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
      * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back
      * to memory and removed from the persistent store. This gives you the ability to 'overflow' to disk, similar to
-     * swapping in an operating system. <br />
-     * <br />
+     * swapping in an operating system. <br>
+     * <br>
      * If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store
      * writes. This essentially gives you a 'write-through' configuration.
      */
@@ -343,8 +343,8 @@ public final class CacheConfigurationConstants {
      * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
      * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back
      * to memory and removed from the persistent store. This gives you the ability to 'overflow' to disk, similar to
-     * swapping in an operating system. <br />
-     * <br />
+     * swapping in an operating system. <br>
+     * <br>
      * If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store
      * writes. This essentially gives you a 'write-through' configuration.
      */
@@ -355,7 +355,7 @@ public final class CacheConfigurationConstants {
      * transactions to finish. The amount of time to wait for is defined by the cache stop timeout. It is recommended
      * that this value does not exceed the transaction timeout because even if a new transaction was started just before
      * the cache was stopped, this could only last as long as the transaction timeout allows it.
-     * <p/>
+     * <br>
      * This configuration property may be adjusted at runtime
      */
     public static final String TRANSACTION__CACHE_STOP_TIMEOUT = "transaction.cacheStopTimeout";
@@ -369,9 +369,7 @@ public final class CacheConfigurationConstants {
      * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then the
      * locking mode is ignored.
      * 
-     * <a href="http://community.jboss.org/wiki/OptimisticLockingInInfinispan"></a>OPTIMISTIC</a> or PESSIMISTIC.
-     * 
-     * @see org.infinispan.config.Configuration#isTransactionalCache()
+     * <a href="http://community.jboss.org/wiki/OptimisticLockingInInfinispan">OPTIMISTIC</a> or PESSIMISTIC.
      */
     public static final String TRANSACTION__LOCKING_MODE = "transaction.lockingMode";
 
@@ -402,7 +400,7 @@ public final class CacheConfigurationConstants {
      * will wait for responses from all nodes to which the commit was sent. Otherwise, the commit phase will be
      * asynchronous. Keeping it as false improves performance of 2PC transactions, since any remote failures are trapped
      * during the prepare phase anyway and appropriate rollbacks are issued.
-     * <p/>
+     * <br>
      * This configuration property may be adjusted at runtime
      */
     public static final String TRANSACTION__SYNC_COMMIT_PHASE = "transaction.syncCommitPhase";
@@ -411,7 +409,7 @@ public final class CacheConfigurationConstants {
      * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be synchronous, so
      * Infinispan will wait for responses from all nodes to which the rollback was sent. Otherwise, the rollback phase
      * will be asynchronous. Keeping it as false improves performance of 2PC transactions.
-     * <p />
+     * <br>
      * 
      * This configuration property may be adjusted at runtime.
      */
@@ -442,7 +440,7 @@ public final class CacheConfigurationConstants {
      * non-transactional access is faster and offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
      * access is no longer supported, so if you wanna speed up transactional caches and you're ready to trade some
      * consistency guarantees, you can enable use1PcForAutoCommitTransactions.
-     * <p/>
+     * <br>
      * 
      * What this configuration option does is force an induced transaction, that has been started by Infinispan as a
      * result of enabling autoCommit, to commit in a single phase. So only 1 RPC instead of 2RPCs as in the case of a
@@ -463,11 +461,11 @@ public final class CacheConfigurationConstants {
     /**
      * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
      * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
-     * <p />
+     * <br>
      * Providing return values can be expensive as they may entail a read from disk or across a network, and if the
      * usage of these methods never make use of these return values, allowing unreliable return values helps Infinispan
      * optimize away these remote calls or disk reads.
-     * <p />
+     * <br>
      * If true, return values for the methods described above should not be relied on.
      */
     public static final String UNSAFE__UNRELIABLE_RETURN_VALUES = "unsafe.unreliableReturnValues";
