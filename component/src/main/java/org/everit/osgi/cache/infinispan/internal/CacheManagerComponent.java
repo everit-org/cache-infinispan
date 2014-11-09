@@ -21,24 +21,13 @@ import java.lang.reflect.Method;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.ConfigurationPolicy;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Reference;
-import org.everit.osgi.cache.CacheConfiguration;
-import org.everit.osgi.cache.CacheFactory;
-import org.everit.osgi.cache.CacheHolder;
 import org.everit.osgi.cache.infinispan.config.CacheFactoryConstants;
-import org.everit.osgi.cache.infinispan.ISPNCacheConfiguration;
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -49,7 +38,6 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.component.ComponentException;
-import org.osgi.service.log.LogService;
 
 /**
  * A component that can customize and create Cache instances.
@@ -72,20 +60,15 @@ import org.osgi.service.log.LogService;
         @Property(name = "logService.target"),
         @Property(name = Constants.SERVICE_DESCRIPTION, propertyPrivate = false)
 })
-public class CacheFactoryComponent implements CacheFactory {
+public class CacheManagerComponent {
 
     private Map<String, ?> componentConfiguration;
-
-    private ConcurrentMap<String, Boolean> activeCacheNames = new ConcurrentHashMap<String, Boolean>();
-
-    @Reference
-    private LogService logService;
 
     private EmbeddedCacheManager manager;
 
     private boolean clustered;
 
-    private ServiceRegistration<CacheFactory> serviceRegistration = null;
+    private ServiceRegistration<?> serviceRegistration = null;
 
     private String servicePID = null;
 
@@ -115,7 +98,8 @@ public class CacheFactoryComponent implements CacheFactory {
             builder.clusteredDefault();
             builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__CLUSTER_NAME, String.class, false);
 
-            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, long.class,
+            builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT,
+                    long.class,
                     false);
 
             builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__MACHINE_ID, String.class, false);
@@ -126,7 +110,8 @@ public class CacheFactoryComponent implements CacheFactory {
 
             builderHelper.applyConfigOnBuilderValue(CacheFactoryConstants.TRANSPORT__SITE_ID, String.class, false);
 
-            String jgroupsXML = configHelper.getPropValue(CacheFactoryConstants.TRANSPORT__CONFIGURATION_XML, String.class,
+            String jgroupsXML = configHelper.getPropValue(CacheFactoryConstants.TRANSPORT__CONFIGURATION_XML,
+                    String.class,
                     false);
 
             if (jgroupsXML != null) {
@@ -167,8 +152,10 @@ public class CacheFactoryComponent implements CacheFactory {
             transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__DISTRIBUTED_SYNC_TIMEOUT, globalConfig,
                     serviceProperties);
 
-            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__MACHINE_ID, globalConfig, serviceProperties);
-            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__NODE_NAME, globalConfig, serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__MACHINE_ID, globalConfig,
+                    serviceProperties);
+            transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__NODE_NAME, globalConfig,
+                    serviceProperties);
             transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__RACK_ID, globalConfig, serviceProperties);
             transferValueToServiceProperties(CacheFactoryConstants.TRANSPORT__SITE_ID, globalConfig, serviceProperties);
 
@@ -190,7 +177,7 @@ public class CacheFactoryComponent implements CacheFactory {
                 globalConfig, serviceProperties);
 
         transferValueToServiceProperties("sites.localSite", globalConfig, serviceProperties);
-        
+
         Object serviceDescription = config.get(Constants.SERVICE_DESCRIPTION);
         if (serviceDescription != null) {
             serviceProperties.put(Constants.SERVICE_DESCRIPTION, serviceDescription);
@@ -199,49 +186,7 @@ public class CacheFactoryComponent implements CacheFactory {
         manager = new DefaultCacheManager(globalConfig);
         manager.start();
 
-        context.registerService(CacheFactory.class, this, serviceProperties);
-    }
-
-    @Override
-    public <K, V> CacheHolder<K, V> createCache(final CacheConfiguration<K, V> cacheConfiguration,
-            final ClassLoader classLoader) {
-
-        if (!(cacheConfiguration instanceof ISPNCacheConfiguration)) {
-            throw new ComponentException("Only configurations with type " + ISPNCacheConfiguration.class.getName()
-                    + " are accepted: " + cacheConfiguration.getClass().getName());
-        }
-        ISPNCacheConfiguration<K, V> ispnCacheConfiguration = (ISPNCacheConfiguration<K, V>) cacheConfiguration;
-
-        Configuration configuration = ispnCacheConfiguration.getConfiguration();
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.read(configuration);
-        if (classLoader != null) {
-            cb.classLoader(classLoader);
-        }
-
-        String cacheName = ispnCacheConfiguration.getCacheName();
-        Boolean cacheAlreadyUsed = activeCacheNames.put(cacheName, Boolean.TRUE);
-        if (cacheAlreadyUsed != null) {
-            throw new ComponentException("Cache with cache name '" + cacheName + "' is already used");
-        }
-        try {
-            logService.log(LogService.LOG_DEBUG, "Creating cache '" + cacheName + "'");
-            manager.defineConfiguration(cacheName, cb.build(true));
-            Cache<K, V> cache = manager.getCache(cacheName);
-            AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
-            advancedCache.with(classLoader);
-            advancedCache.start();
-            return new CacheHolderImpl<K, V>(advancedCache, this);
-        } catch (RuntimeException e) {
-            activeCacheNames.remove(cacheName);
-            logService.log(LogService.LOG_DEBUG, "Cache '" + cacheName + "' is removed due to exception");
-            throw e;
-        }
-    }
-
-    void cacheClosed(String cacheName) {
-        logService.log(LogService.LOG_DEBUG, "Cache '" + cacheName + "' is removed");
-        activeCacheNames.remove(cacheName);
+        serviceRegistration = context.registerService(new String[] {}, manager, serviceProperties);
     }
 
     /**

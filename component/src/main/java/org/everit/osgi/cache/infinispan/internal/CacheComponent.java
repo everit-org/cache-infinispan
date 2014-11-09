@@ -31,15 +31,16 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.PropertyOption;
 import org.apache.felix.scr.annotations.Reference;
-import org.everit.osgi.cache.CacheConfiguration;
 import org.everit.osgi.cache.infinispan.config.CacheConfigurationConstants;
-import org.everit.osgi.cache.infinispan.ISPNCacheConfiguration;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -54,7 +55,7 @@ import org.osgi.service.component.ComponentException;
 @Component(name = CacheConfigurationConstants.SERVICE_FACTORYPID_CACHE_CONFIGURATION, configurationFactory = true,
         immediate = true, policy = ConfigurationPolicy.REQUIRE, metatype = true)
 @Properties({
-        @Property(name = CacheConfigurationConstants.CACHE_NAME),
+        @Property(name = "cacheManager.target"),
         @Property(name = CacheConfigurationConstants.EVICTION__MAX_ENTRIES, intValue = -1),
         @Property(name = CacheConfigurationConstants.EVICTION__STRATEGY, options = {
                 @PropertyOption(name = CacheConfigurationConstants.EVICTION__STRATEGY_OPT_NONE,
@@ -194,18 +195,21 @@ import org.osgi.service.component.ComponentException;
         @Property(name = CacheConfigurationConstants.TRANSACTION__TRANSACTION_SYNCHRONIZATION_REGISTRY__TARGET),
         @Property(name = Constants.SERVICE_DESCRIPTION, propertyPrivate = false)
 })
-public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration<K, V> {
+public class CacheComponent<K, V> {
 
-    private ServiceRegistration<?> serviceRegistration = null;
+    private ServiceRegistration<Configuration> serviceRegistration = null;
 
-    private Configuration configuration = null;
-
-    private String cacheName = null;
-
-    @Reference
+    @Reference(bind = "setTransactionManager")
     private TransactionManager transactionManager;
 
-    @Reference
+    @Reference(bind = "setCacheManager")
+    private EmbeddedCacheManager cacheManager;
+
+    public void setCacheManager(EmbeddedCacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
+
+    @Reference(bind = "setTransactionSynchronizationRegistry")
     private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
     @Activate
@@ -218,9 +222,6 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
                 builder);
 
         ReflectiveComponentConfigurationHelper cch = h.getComponentConfigHelper();
-
-        cacheName = cch.getPropValue(CacheConfigurationConstants.CACHE_NAME, String.class, true);
-        serviceProperties.put(CacheConfigurationConstants.CACHE_NAME, cacheName);
 
         h.applyConfigOnBuilderValue(CacheConfigurationConstants.EVICTION__MAX_ENTRIES, int.class, false);
         h.applyConfigOnBuilderValue(CacheConfigurationConstants.EVICTION__STRATEGY, EvictionStrategy.class, false);
@@ -347,9 +348,17 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         }
         h.applyConfigOnBuilderValue(CacheConfigurationConstants.JMX_STATISTICS__ENABLED, boolean.class, false);
 
-        configuration = builder.build(true);
+        Configuration configuration = builder.build(true);
 
-        fillServiceProperties(serviceProperties);
+        String cacheName = (String) componentConfiguration.get(Constants.SERVICE_PID);
+
+        cacheManager.defineConfiguration(cacheName, configuration);
+        Cache<K, V> cache = cacheManager.getCache(cacheName);
+        AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+        advancedCache.with(classLoader);
+        advancedCache.start();
+
+        fillServiceProperties(serviceProperties, configuration);
 
         Object serviceDescription = componentConfiguration.get(Constants.SERVICE_DESCRIPTION);
         if (serviceDescription != null) {
@@ -357,8 +366,7 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         }
 
         serviceRegistration = context.registerService(
-                new String[] { CacheConfiguration.class.getName(), ISPNCacheConfiguration.class.getName() }, this,
-                new Hashtable<String, Object>(serviceProperties));
+                Configuration.class, configuration, new Hashtable<String, Object>(serviceProperties));
     }
 
     private Boolean applyNullableBoolean(final String key, final ReflectiveConfigurationBuilderHelper helper) {
@@ -386,7 +394,7 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         }
     }
 
-    private void fillServiceProperties(final Map<String, Object> serviceProperties) {
+    private void fillServiceProperties(final Map<String, Object> serviceProperties, Configuration configuration) {
         ReflectiveConfigToServicePropsHelper h = new ReflectiveConfigToServicePropsHelper(configuration,
                 serviceProperties);
 
@@ -441,16 +449,6 @@ public class CacheConfigurationComponent<K, V> implements ISPNCacheConfiguration
         h.transferProperty(CacheConfigurationConstants.VERSIONING__ENABLED);
         h.transferProperty(CacheConfigurationConstants.VERSIONING__SCHEME);
         h.transferProperty(CacheConfigurationConstants.JMX_STATISTICS__ENABLED);
-    }
-
-    @Override
-    public String getCacheName() {
-        return cacheName;
-    }
-
-    @Override
-    public Configuration getConfiguration() {
-        return configuration;
     }
 
     public void setTransactionManager(final TransactionManager transactionManager) {

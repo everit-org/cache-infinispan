@@ -33,11 +33,6 @@ public final class CacheConfigurationConstants {
             "org.everit.osgi.cache.infinispan.CacheConfiguration";
 
     /**
-     * Name of the cache. Must be unique.
-     */
-    public static final String CACHE_NAME = "cacheName";
-
-    /**
      * Enable asynchronous marshalling. This allows the caller to return even quicker, but it can suffer from reordering
      * of operations. You can find more information at <a
      * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
@@ -354,8 +349,7 @@ public final class CacheConfigurationConstants {
      * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing remote and local
      * transactions to finish. The amount of time to wait for is defined by the cache stop timeout. It is recommended
      * that this value does not exceed the transaction timeout because even if a new transaction was started just before
-     * the cache was stopped, this could only last as long as the transaction timeout allows it.
-     * <br>
+     * the cache was stopped, this could only last as long as the transaction timeout allows it. <br>
      * This configuration property may be adjusted at runtime
      */
     public static final String TRANSACTION__CACHE_STOP_TIMEOUT = "transaction.cacheStopTimeout";
@@ -399,8 +393,7 @@ public final class CacheConfigurationConstants {
      * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be synchronous, so Infinispan
      * will wait for responses from all nodes to which the commit was sent. Otherwise, the commit phase will be
      * asynchronous. Keeping it as false improves performance of 2PC transactions, since any remote failures are trapped
-     * during the prepare phase anyway and appropriate rollbacks are issued.
-     * <br>
+     * during the prepare phase anyway and appropriate rollbacks are issued. <br>
      * This configuration property may be adjusted at runtime
      */
     public static final String TRANSACTION__SYNC_COMMIT_PHASE = "transaction.syncCommitPhase";
@@ -408,8 +401,7 @@ public final class CacheConfigurationConstants {
     /**
      * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be synchronous, so
      * Infinispan will wait for responses from all nodes to which the rollback was sent. Otherwise, the rollback phase
-     * will be asynchronous. Keeping it as false improves performance of 2PC transactions.
-     * <br>
+     * will be asynchronous. Keeping it as false improves performance of 2PC transactions. <br>
      * 
      * This configuration property may be adjusted at runtime.
      */
@@ -439,8 +431,7 @@ public final class CacheConfigurationConstants {
      * Before Infinispan 5.1 you could access the cache both transactionally and non-transactionally. Naturally the
      * non-transactional access is faster and offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
      * access is no longer supported, so if you wanna speed up transactional caches and you're ready to trade some
-     * consistency guarantees, you can enable use1PcForAutoCommitTransactions.
-     * <br>
+     * consistency guarantees, you can enable use1PcForAutoCommitTransactions. <br>
      * 
      * What this configuration option does is force an induced transaction, that has been started by Infinispan as a
      * result of enabling autoCommit, to commit in a single phase. So only 1 RPC instead of 2RPCs as in the case of a
@@ -460,12 +451,10 @@ public final class CacheConfigurationConstants {
 
     /**
      * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
-     * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
-     * <br>
+     * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods. <br>
      * Providing return values can be expensive as they may entail a read from disk or across a network, and if the
      * usage of these methods never make use of these return values, allowing unreliable return values helps Infinispan
-     * optimize away these remote calls or disk reads.
-     * <br>
+     * optimize away these remote calls or disk reads. <br>
      * If true, return values for the methods described above should not be relied on.
      */
     public static final String UNSAFE__UNRELIABLE_RETURN_VALUES = "unsafe.unreliableReturnValues";
