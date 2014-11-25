@@ -197,17 +197,13 @@ import org.osgi.service.component.ComponentException;
 })
 public class CacheComponent<K, V> {
 
-    private ServiceRegistration<Configuration> serviceRegistration = null;
-
-    @Reference(bind = "setTransactionManager")
-    private TransactionManager transactionManager;
-
     @Reference(bind = "setCacheManager")
     private EmbeddedCacheManager cacheManager;
 
-    public void setCacheManager(EmbeddedCacheManager cacheManager) {
-        this.cacheManager = cacheManager;
-    }
+    private ServiceRegistration<?> serviceRegistration = null;
+
+    @Reference(bind = "setTransactionManager")
+    private TransactionManager transactionManager;
 
     @Reference(bind = "setTransactionSynchronizationRegistry")
     private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
@@ -350,15 +346,16 @@ public class CacheComponent<K, V> {
 
         Configuration configuration = builder.build(true);
 
+        fillServiceProperties(serviceProperties, configuration);
+
         String cacheName = (String) componentConfiguration.get(Constants.SERVICE_PID);
 
         cacheManager.defineConfiguration(cacheName, configuration);
+
         Cache<K, V> cache = cacheManager.getCache(cacheName);
         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
         advancedCache.with(classLoader);
         advancedCache.start();
-
-        fillServiceProperties(serviceProperties, configuration);
 
         Object serviceDescription = componentConfiguration.get(Constants.SERVICE_DESCRIPTION);
         if (serviceDescription != null) {
@@ -394,7 +391,7 @@ public class CacheComponent<K, V> {
         }
     }
 
-    private void fillServiceProperties(final Map<String, Object> serviceProperties, Configuration configuration) {
+    private void fillServiceProperties(final Map<String, Object> serviceProperties, final Configuration configuration) {
         ReflectiveConfigToServicePropsHelper h = new ReflectiveConfigToServicePropsHelper(configuration,
                 serviceProperties);
 
@@ -449,6 +446,10 @@ public class CacheComponent<K, V> {
         h.transferProperty(CacheConfigurationConstants.VERSIONING__ENABLED);
         h.transferProperty(CacheConfigurationConstants.VERSIONING__SCHEME);
         h.transferProperty(CacheConfigurationConstants.JMX_STATISTICS__ENABLED);
+    }
+
+    public void setCacheManager(final EmbeddedCacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     public void setTransactionManager(final TransactionManager transactionManager) {
